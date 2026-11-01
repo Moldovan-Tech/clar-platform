@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Compass, Briefcase, Cloud, Target, CalendarDays, Mic, WifiOff } from 'lucide-react';
+import { Compass, Briefcase, Cloud, Target, CalendarDays, Mic, WifiOff } from 'lucide-react';
 import { BRAND_NAME, BRAND_TAGLINE, BrandMark } from './BrandMark';
 import { AccessibilityTrigger, AccessibleScreen } from './AccessibilityPanel';
 import { EmailAuthForm, type EmailAuthMode } from './EmailAuthForm';
@@ -40,7 +40,7 @@ const GoogleIcon = () => (
   </svg>
 );
 
-type FeatureKey = 'wheel' | 'goals' | 'top10' | 'agenda' | 'protected' | 'dictate' | 'offline';
+type FeatureKey = 'wheel' | 'goals' | 'top10' | 'agenda' | 'dictate' | 'offline';
 
 const m = messages<{
   features: Record<FeatureKey, { title: string; text: string }>;
@@ -83,10 +83,6 @@ const m = messages<{
         title: 'Agenda y alarmas',
         text: 'Fechas, repeticiones y alarmas que te avisan aunque CLAR esté cerrada. Lo de hoy, a la vista.'
       },
-      protected: {
-        title: 'Tiempo protegido',
-        text: 'Reuniones con orden del día y correos pensados antes de escribirlos.'
-      },
       dictate: {
         title: 'Dicta tus tareas',
         text: 'Pulsa el micrófono y dilo, o mantén pulsado el icono de la app: «Nueva tarea por voz».'
@@ -116,7 +112,7 @@ const m = messages<{
     consentMiddle: '. Cómo tratamos tus datos: ',
     privacy: 'política de privacidad',
     storage:
-      'Si entras con email y contraseña, primero confirmarás tu email. Tus tareas, metas, proyectos, evaluaciones, agenda y correos se guardan en tu cuenta, en servidores de Google Cloud en la Unión Europea (Bélgica).'
+      'Si entras con email y contraseña, primero confirmarás tu email. Tus tareas, metas, proyectos, evaluaciones y agenda se guardan en tu cuenta, en servidores de Google Cloud en la Unión Europea (Bélgica).'
   },
   {
     features: {
@@ -135,10 +131,6 @@ const m = messages<{
       agenda: {
         title: 'Agenda and alarms',
         text: "Dates, repeats and alarms that notify you even when CLAR is closed. Today's tasks, in plain sight."
-      },
-      protected: {
-        title: 'Protected time',
-        text: 'Meetings with an agenda and emails thought through before you write them.'
       },
       dictate: {
         title: 'Dictate your tasks',
@@ -169,7 +161,7 @@ const m = messages<{
     consentMiddle: '. How we handle your data: ',
     privacy: 'privacy policy',
     storage:
-      'If you sign in with email and password, you will confirm your email first. Your tasks, goals, projects, assessments, agenda and emails are saved in your account, on Google Cloud servers in the European Union (Belgium).'
+      'If you sign in with email and password, you will confirm your email first. Your tasks, goals, projects, assessments and agenda are saved in your account, on Google Cloud servers in the European Union (Belgium).'
   }
 );
 
@@ -180,7 +172,6 @@ const FEATURES: { icon: React.ReactNode; title: string; text: string }[] = [
   { icon: <Target className="h-5 w-5 text-indigo-600" aria-hidden="true" />, ...m.features.goals },
   { icon: <Briefcase className="h-5 w-5 text-indigo-600" aria-hidden="true" />, ...m.features.top10 },
   { icon: <CalendarDays className="h-5 w-5 text-indigo-600" aria-hidden="true" />, ...m.features.agenda },
-  { icon: <ShieldCheck className="h-5 w-5 text-indigo-600" aria-hidden="true" />, ...m.features.protected },
   { icon: <Mic className="h-5 w-5 text-indigo-600" aria-hidden="true" />, ...m.features.dictate },
   { icon: <WifiOff className="h-5 w-5 text-indigo-600" aria-hidden="true" />, ...m.features.offline }
 ];

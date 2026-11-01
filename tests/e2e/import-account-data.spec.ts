@@ -1,6 +1,6 @@
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
-import { fillAndSaveTask, openSection, signInWithGoogle } from './helpers';
+import { fillAndSaveTask, openSection, patchDocument, readDocument, signInWithGoogle, uidOf } from './helpers';
 
 const openAccount = async (page: Page) => {
   await page.getByRole('button', { name: 'Tu cuenta' }).click();
@@ -73,6 +73,70 @@ test('the account download is imported into another account, and importing it ag
   // Importarlo otra vez no duplica nada
   await importFile(target, file);
   await expect(preview).toContainText('Ya tienes en tu cuenta todo lo de este archivo.');
+});
+
+// Las reuniones y los correos de «Tiempo protegido» (retirado en la 1.3.0) ya no se ven ni se crean, pero los que se
+// guardaron siguen en la descarga y la importación los trae a otra cuenta
+test('meetings and emails saved before 1.3.0 stay in the download and are imported into another account', async ({
+  browser
+}, testInfo) => {
+  test.slow(); // Dos cuentas, una descarga y una importación
+  const text = (value: string) => ({ stringValue: value });
+  const createdAt = new Date().toISOString();
+  const source = await (await browser.newContext()).newPage();
+  await source.goto('/');
+  const sourceUid = await uidOf(await signInWithGoogle(source));
+  await patchDocument(`users/${sourceUid}/meetings/meet-legacy`, {
+    id: text('meet-legacy'),
+    userId: text(sourceUid),
+    title: text('Revisión semanal'),
+    startTime: text('2026-10-20T11:00:00.000Z'),
+    endTime: text('2026-10-20T11:45:00.000Z'),
+    agendaPoints: { arrayValue: { values: [text('Estado del proyecto')] } },
+    moderatorName: text('Persona moderadora'),
+    moderatorEmail: text(''),
+    createdAt: text(createdAt)
+  });
+  await patchDocument(`users/${sourceUid}/emails/email-legacy`, {
+    id: text('email-legacy'),
+    userId: text(sourceUid),
+    subject: text('Acta de la reunión'),
+    body: text('Adjunto el acta de la reunión de esta semana.'),
+    attachments: {
+      arrayValue: { values: [{ mapValue: { fields: { name: text('acta.pdf'), size: text('2 KB') } } }] }
+    },
+    noAttachmentsDeclared: { booleanValue: false },
+    recipients: { arrayValue: { values: [text('equipo@example.com')] } },
+    status: text('draft'),
+    updatedAt: text(createdAt)
+  });
+
+  const account = await openAccount(source);
+  const download = source.waitForEvent('download');
+  await account.getByRole('button', { name: 'Descargar mis datos (JSON)' }).click();
+  const file = testInfo.outputPath('clar.json');
+  await (await download).saveAs(file);
+  const exported = JSON.parse(await readFile(file, 'utf8')) as {
+    meetings: { id: string; title: string }[];
+    emails: { id: string; subject: string; status: string }[];
+  };
+  expect(exported.meetings.map(({ id, title }) => [id, title])).toEqual([['meet-legacy', 'Revisión semanal']]);
+  expect(exported.emails.map(({ id, subject, status }) => [id, subject, status])).toEqual([
+    ['email-legacy', 'Acta de la reunión', 'draft']
+  ]);
+
+  const target = await (await browser.newContext()).newPage();
+  await target.goto('/');
+  const targetUid = await uidOf(await signInWithGoogle(target));
+  await importFile(target, file);
+  const preview = target.getByRole('dialog', { name: 'Importar datos' });
+  await expect(preview.getByRole('row', { name: /^Reuniones/ })).toHaveText(/Reuniones\s*1\s*0\s*0/);
+  await expect(preview.getByRole('row', { name: /^Correos/ })).toHaveText(/Correos\s*1\s*0\s*0/);
+  await preview.getByRole('button', { name: 'Importar 2 elementos' }).click();
+  await expect(preview).toBeHidden();
+  await expect(target.getByRole('status').filter({ hasText: 'Importado' })).toHaveText('Importado: 2 elementos.');
+  expect((await readDocument(`users/${targetUid}/meetings/meet-legacy`))?.title).toBe('Revisión semanal');
+  expect((await readDocument(`users/${targetUid}/emails/email-legacy`))?.subject).toBe('Acta de la reunión');
 });
 
 test('a file that is not the account download is refused with the reason', async ({ page }, testInfo) => {

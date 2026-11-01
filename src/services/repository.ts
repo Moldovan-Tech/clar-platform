@@ -33,6 +33,11 @@ export const USER_COLLECTIONS: UserCollection[] = [
   'taskDrafts'
 ];
 
+// Las que la app sigue en vivo. Las reuniones y los correos de «Tiempo protegido» (retirado en la 1.3.0) ya no se ven
+// ni se crean: los guardados siguen en la cuenta, van en la descarga, la importación los trae y se borran con la cuenta
+export type LiveCollection = Exclude<UserCollection, 'meetings' | 'emails'>;
+export const LIVE_COLLECTIONS: LiveCollection[] = ['tasks', 'wheelLogs', 'goals', 'projects', 'taskDrafts'];
+
 export interface UserData {
   tasks: TaskItem[];
   wheelLogs: WheelOfLifeLog[];
@@ -47,12 +52,10 @@ const userCollection = (db: Firestore, uid: string, name: UserCollection) => col
 
 const byDateDesc = (a?: string, b?: string) => (b ?? '').localeCompare(a ?? '');
 
-// Orden en cliente: un orderBy en la consulta excluiría los documentos sin ese campo (p. ej. correos sin sentAt)
+// Orden en cliente: un orderBy en la consulta excluiría los documentos sin ese campo
 const SORTERS = {
   tasks: (a: TaskItem, b: TaskItem) => byDateDesc(a.createdAt, b.createdAt),
   wheelLogs: (a: WheelOfLifeLog, b: WheelOfLifeLog) => a.timestamp.localeCompare(b.timestamp),
-  meetings: (a: MeetingGuard, b: MeetingGuard) => byDateDesc(a.createdAt, b.createdAt),
-  emails: (a: EmailDraft, b: EmailDraft) => byDateDesc(a.updatedAt ?? a.sentAt, b.updatedAt ?? b.sentAt),
   goals: (a: Goal, b: Goal) => byDateDesc(a.createdAt, b.createdAt),
   projects: (a: Project, b: Project) => byDateDesc(a.createdAt, b.createdAt),
   taskDrafts: (a: TaskDraft, b: TaskDraft) => byDateDesc(a.updatedAt, b.updatedAt)
@@ -65,7 +68,7 @@ export interface SnapshotInfo {
   hasPendingWrites: boolean;
 }
 
-export const subscribeToCollection = <K extends UserCollection>(
+export const subscribeToCollection = <K extends LiveCollection>(
   db: Firestore,
   uid: string,
   name: K,
@@ -206,31 +209,11 @@ export const deleteProject = async (db: Firestore, uid: string, project: Project
 export const appendWheelLog = (db: Firestore, uid: string, log: WheelOfLifeLog) =>
   setDoc(doc(userCollection(db, uid, 'wheelLogs'), log.id), { ...log, userId: uid });
 
-export const saveMeeting = (db: Firestore, uid: string, meeting: MeetingGuard) =>
-  setDoc(doc(userCollection(db, uid, 'meetings'), meeting.id), { ...meeting, userId: uid });
-
-export const saveEmail = (db: Firestore, uid: string, email: EmailDraft) =>
-  setDoc(doc(userCollection(db, uid, 'emails'), email.id), { ...email, userId: uid });
-
-export const deleteEmail = (db: Firestore, uid: string, emailId: string) =>
-  deleteDoc(doc(userCollection(db, uid, 'emails'), emailId));
-
 export const saveTaskDraft = (db: Firestore, uid: string, draft: TaskDraft) =>
   setDoc(doc(userCollection(db, uid, 'taskDrafts'), draft.id), { ...draft, userId: uid });
 
 export const deleteTaskDraft = (db: Firestore, uid: string, draftId: string) =>
   deleteDoc(doc(userCollection(db, uid, 'taskDrafts'), draftId));
-
-// Recuperar un correo eliminado, solo si nadie lo ha vuelto a guardar entretanto (p. ej. desde otra pestaña)
-export const restoreDeletedEmail = async (db: Firestore, uid: string, email: EmailDraft) => {
-  await whenSynced(db);
-  const ref = doc(userCollection(db, uid, 'emails'), email.id);
-  return runTransaction(db, async (tx) => {
-    if ((await tx.get(ref)).exists()) return false;
-    tx.set(ref, { ...email, userId: uid });
-    return true;
-  });
-};
 
 export const saveUserProfile = (db: Firestore, user: User) =>
   setDoc(

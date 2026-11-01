@@ -68,10 +68,11 @@ const PrivacyPolicyEs: React.FC = () => (
           <strong>Lo que escribes en CLAR:</strong> tareas (títulos, descripciones, notas, enlaces, fechas, alarmas y de
           qué otra tarea dependen) y sus borradores (las tareas nuevas que cierras sin guardar, hasta que las guardas o
           las eliminas), metas, proyectos (nombre, meta, fecha de fin y descripción), evaluaciones de la Rueda de la
-          Vida (tu puntuación de 0 a 10 en cada área, y los nombres de tus áreas si las cambias o añades), reuniones y
-          correos de «Tiempo protegido» (asunto, texto, destinatarios y el nombre y el tamaño de los adjuntos: los
-          archivos no salen de tu dispositivo). Sirven para que la app funcione. Las reuniones y los correos pueden
-          incluir el nombre y el email de otras personas: añádelos solo si tienes motivo para ello.
+          Vida (tu puntuación de 0 a 10 en cada área, y los nombres de tus áreas si las cambias o añades). Sirven para
+          que la app funcione. Si guardaste reuniones o correos en «Tiempo protegido» con una versión anterior (asunto,
+          texto, destinatarios y el nombre y el tamaño de los adjuntos: los archivos no salieron de tu dispositivo), se
+          conservan en tu cuenta aunque la app ya no los muestre: van en «Descargar mis datos» y se eliminan con tu
+          cuenta. Pueden incluir el nombre y el email de otras personas.
         </li>
         <li>
           <strong>Registro de acceso:</strong> tu nombre, email y foto, el estado de tu acceso y sus fechas y, si pides
@@ -194,10 +195,9 @@ const PrivacyPolicyEs: React.FC = () => (
           Otros servicios, solo cuando tú lo decides: al usar «Añadir al calendario» con Google Calendar u Outlook, el
           título, la descripción y las notas de la tarea van en el enlace; si conectas Google Calendar, los datos de tus
           tareas con fecha van al calendario «CLAR» de tu propia cuenta de Google, donde Google los trata según sus
-          condiciones y su política de privacidad; «Abrir en mi correo» pasa el correo a tu programa de correo; si
-          dictas una tarea o una nota con el micrófono, tu navegador pasa tu voz a texto enviando el audio a su
-          proveedor (Google en Chrome, Apple en Safari, Microsoft en Edge), que lo trata según sus condiciones. CLAR no
-          recibe ni guarda el audio: solo el texto, como si lo hubieras escrito.
+          condiciones y su política de privacidad; si dictas una tarea o una nota con el micrófono, tu navegador pasa tu
+          voz a texto enviando el audio a su proveedor (Google en Chrome, Apple en Safari, Microsoft en Edge), que lo
+          trata según sus condiciones. CLAR no recibe ni guarda el audio: solo el texto, como si lo hubieras escrito.
         </li>
       </List>
       <p>CLAR no vende ni cede tus datos a nadie.</p>
@@ -267,7 +267,7 @@ const PrivacyPolicyEs: React.FC = () => (
         llevártelos (portabilidad). Casi todo lo puedes hacer tú desde la app:
       </p>
       <List>
-        <li>Cambiar o borrar cualquier tarea, meta o correo.</li>
+        <li>Cambiar o borrar cualquier tarea, meta o proyecto.</li>
         <li>«Descargar mis datos», en el menú de tu cuenta: un archivo JSON con lo que has escrito.</li>
         <li>
           «Importar datos», en el mismo menú: vuelve a añadir a tu cuenta lo de una descarga anterior. El archivo se lee
@@ -334,9 +334,9 @@ const TermsOfUseEs: React.FC = () => (
 
     <Section id="terms-service" title="El servicio">
       <p>
-        CLAR es una app gratuita para organizar el tiempo: Rueda de la Vida, metas, tareas, agenda, alarmas y
-        herramientas para proteger tu tiempo. La ofrece {ownerName()}, como proyecto personal. CLAR no envía correos en
-        tu nombre: los prepara para que los envíes tú.
+        CLAR es una app gratuita para organizar el tiempo: Rueda de la Vida, metas, proyectos, tareas, agenda, alarmas y
+        recomendaciones para proteger tu tiempo. La ofrece {ownerName()}, como proyecto personal. CLAR no envía correos
+        en tu nombre.
       </p>
     </Section>
 
@@ -508,10 +508,11 @@ const PrivacyPolicyEn: React.FC<EnglishTextProps> = ({ onShowSpanish }) => (
           <strong>What you write in CLAR:</strong> tasks (titles, descriptions, notes, links, dates, alarms and which
           other task they depend on) and their drafts (new tasks you close without saving, until you save or delete
           them), goals, projects (name, goal, end date and description), Wheel of Life assessments (your score from 0 to
-          10 in each area, and the names of your areas if you change them or add your own), and meetings and emails in
-          “Protected time” (subject, text, recipients and the name and size of attachments: the files never leave your
-          device). This data is used to make the app work. Meetings and emails may include other people's names and
-          email addresses: only add them if you have a reason to.
+          10 in each area, and the names of your areas if you change them or add your own). This data is used to make
+          the app work. If you saved meetings or emails in “Protected time” with an earlier version (subject, text,
+          recipients and the name and size of attachments: the files never left your device), they are kept in your
+          account even though the app no longer shows them: they are included in “Download my data” and deleted with
+          your account. They may include other people's names and email addresses.
         </li>
         <li>
           <strong>Access record:</strong> your name, email and photo, the status of your access and its dates and, if
@@ -633,10 +634,10 @@ const PrivacyPolicyEn: React.FC<EnglishTextProps> = ({ onShowSpanish }) => (
           Other services, only when you decide: when you use “Add to calendar” with Google Calendar or Outlook, the
           task's title, description and notes go in the link; if you connect Google Calendar, the data of your tasks
           with a date goes to the “CLAR” calendar in your own Google account, where Google processes it under its terms
-          and its privacy policy; “Open in my email” passes the email to your email app; if you dictate a task or a note
-          with the microphone, your browser turns your voice into text by sending the audio to its provider (Google in
-          Chrome, Apple in Safari, Microsoft in Edge), which processes it under its own terms. CLAR does not receive or
-          store the audio: only the text, as if you had typed it.
+          and its privacy policy; if you dictate a task or a note with the microphone, your browser turns your voice
+          into text by sending the audio to its provider (Google in Chrome, Apple in Safari, Microsoft in Edge), which
+          processes it under its own terms. CLAR does not receive or store the audio: only the text, as if you had typed
+          it.
         </li>
       </List>
       <p>CLAR does not sell or hand over your data to anyone.</p>
@@ -705,7 +706,7 @@ const PrivacyPolicyEn: React.FC<EnglishTextProps> = ({ onShowSpanish }) => (
         with you (portability). You can do almost all of it yourself from the app:
       </p>
       <List>
-        <li>Change or delete any task, goal or email.</li>
+        <li>Change or delete any task, goal or project.</li>
         <li>“Download my data”, in your account menu: a JSON file with what you have written.</li>
         <li>
           “Import data”, in the same menu: adds back to your account what was in a previous download. The file is read
@@ -773,9 +774,9 @@ const TermsOfUseEn: React.FC<EnglishTextProps> = ({ onShowSpanish }) => (
 
     <Section id="terms-service" title="The service">
       <p>
-        CLAR is a free app for organizing your time: Wheel of Life, goals, tasks, agenda, alarms and tools to protect
-        your time. It is offered by {ownerName()}, as a personal project. CLAR does not send emails on your behalf: it
-        prepares them for you to send.
+        CLAR is a free app for organizing your time: Wheel of Life, goals, projects, tasks, agenda, alarms and tips to
+        protect your time. It is offered by {ownerName()}, as a personal project. CLAR does not send emails on your
+        behalf.
       </p>
     </Section>
 

@@ -15,8 +15,6 @@ import {
   WheelArea,
   WheelCategory,
   WheelOfLifeLog,
-  MeetingGuard,
-  EmailDraft,
   Goal,
   GoalStatus,
   Project,
@@ -44,18 +42,14 @@ import {
   markOnboardingSeen,
   markReleaseNotesSeen,
   importUserData,
-  saveEmail,
-  deleteEmail,
   saveTaskDraft,
   deleteTaskDraft,
   saveTaskFromDraft,
-  restoreDeletedEmail,
-  saveMeeting,
   saveTask,
   subscribeToCollection,
-  USER_COLLECTIONS,
-  type SnapshotInfo,
-  type UserCollection
+  LIVE_COLLECTIONS,
+  type LiveCollection,
+  type SnapshotInfo
 } from './services/repository';
 import { buildImport, clearLocalData, getLocalProfiles, type LocalProfileSummary } from './services/localData';
 import { arrangeTasks, parseListPrefs, splitTop10, type ListPrefs } from './services/taskListing';
@@ -111,9 +105,6 @@ import { TaskList } from './components/TaskList';
 import { TaskModal, type TaskFormData } from './components/TaskModal';
 import { ArchivedTasksModal } from './components/ArchivedTasksModal';
 import { DRAFTS_BUTTON_ID, TaskDraftsModal } from './components/TaskDraftsModal';
-import { MeetingModal } from './components/MeetingModal';
-import { EmailModal, type EmailSaveKind } from './components/EmailModal';
-import { isDraft } from './services/email';
 import { SplashScreen } from './components/SplashScreen';
 import { AccountMenu } from './components/AccountMenu';
 import { LegalLinks } from './components/LegalLinks';
@@ -185,7 +176,6 @@ const initialsOf = (name: string) =>
 // Secciones y ventanas que no se ven al arrancar: se cargan la primera vez que se abren
 const AgendaView = retryableLazy(() => import('./components/AgendaView').then((m) => m.AgendaView));
 const WheelOfLife = retryableLazy(() => import('./components/WheelOfLife').then((m) => m.WheelOfLife));
-const BermudasShield = retryableLazy(() => import('./components/BermudasShield').then((m) => m.BermudasShield));
 const HowItWorks = retryableLazy(() => import('./components/HowItWorks').then((m) => m.HowItWorks));
 const AdminView = retryableLazy(() => import('./components/AdminView').then((m) => m.AdminView));
 const GoalsView = retryableLazy(() => import('./components/GoalsView').then((m) => m.GoalsView));
@@ -259,10 +249,6 @@ const m = messages(
       deleteProject: 'eliminar el proyecto',
       deleteTask: 'eliminar la tarea',
       saveAssessment: 'guardar la evaluación',
-      saveMeeting: 'guardar la reunión',
-      saveEmail: 'guardar el correo',
-      deleteEmail: 'eliminar el correo',
-      restoreEmail: 'recuperar el correo',
       saveFeature: 'guardar la función extra',
       saveAreas: 'guardar las áreas',
       saveProgress: 'guardar tu progreso'
@@ -308,13 +294,6 @@ const m = messages(
     // Nombre de una evaluación de la Rueda sin nombre, con su fecha
     assessment: (date: string) => `Evaluación ${date}`,
     assessmentSaved: 'Evaluación guardada.',
-    meetingSaved: 'Reunión guardada.',
-    emailSaved: 'Correo guardado.',
-    emailDraftSaved: 'Borrador guardado. Lo tienes en «Borradores».',
-    emailAutoDraft: 'Lo que escribiste se guardó como borrador.',
-    emailDeleted: 'Correo eliminado.',
-    emailRestored: 'Correo recuperado.',
-    emailChanged: 'No se puede deshacer: el correo se ha vuelto a guardar entretanto.',
     importedItems: (n: number) => `${n} ${n === 1 ? 'elemento' : 'elementos'}`,
     importedWheel: 'las áreas de tu Rueda',
     importedAreas: (n: number) => `${n} ${n === 1 ? 'área' : 'áreas'}`,
@@ -364,10 +343,6 @@ const m = messages(
       deleteProject: 'delete the project',
       deleteTask: 'delete the task',
       saveAssessment: 'save the assessment',
-      saveMeeting: 'save the meeting',
-      saveEmail: 'save the email',
-      deleteEmail: 'delete the email',
-      restoreEmail: 'restore the email',
       saveFeature: 'save the extra feature',
       saveAreas: 'save the areas',
       saveProgress: 'save your progress'
@@ -412,13 +387,6 @@ const m = messages(
     taskDeleted: 'Task deleted.',
     assessment: (date) => `Assessment ${date}`,
     assessmentSaved: 'Assessment saved.',
-    meetingSaved: 'Meeting saved.',
-    emailSaved: 'Email saved.',
-    emailDraftSaved: 'Draft saved. You have it in “Drafts”.',
-    emailAutoDraft: 'What you wrote was saved as a draft.',
-    emailDeleted: 'Email deleted.',
-    emailRestored: 'Email restored.',
-    emailChanged: "Can't undo: the email has been saved again in the meantime.",
     importedItems: (n) => `${n} ${n === 1 ? 'item' : 'items'}`,
     importedWheel: 'your Wheel areas',
     importedAreas: (n) => `${n} ${n === 1 ? 'area' : 'areas'}`,
@@ -461,8 +429,6 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
   const [storedTasks, setTasks] = useState<TaskItem[]>([]);
   const [wheelLogs, setWheelLogs] = useState<WheelOfLifeLog[]>([]);
   const [wheelSynced, setWheelSynced] = useState(false);
-  const [meetings, setMeetings] = useState<MeetingGuard[]>([]);
-  const [emails, setEmails] = useState<EmailDraft[]>([]);
   const [taskDrafts, setTaskDrafts] = useState<TaskDraft[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -657,9 +623,6 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
   const [newTaskGoalId, setNewTaskGoalId] = useState<string | undefined>();
   const [newTaskProjectId, setNewTaskProjectId] = useState<string | undefined>();
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
-  const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
-  // Correo que se está escribiendo: uno nuevo, un borrador que se continúa o uno guardado que se abre
-  const [emailEditor, setEmailEditor] = useState<{ email?: EmailDraft } | null>(null);
 
   // Toast / Banner de notificación
   // Con `undo`, el aviso ofrece «Deshacer» y dura un poco más. Con `celebration`, añade ese mensaje debajo del suyo,
@@ -692,12 +655,13 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
     [showToast]
   );
 
-  // SINCRONIZACIÓN: verde solo si las cuatro colecciones están confirmadas por el servidor y sin escrituras pendientes
-  const [syncByCollection, setSyncByCollection] = useState<Record<UserCollection, SnapshotInfo>>(
+  // SINCRONIZACIÓN: verde solo si las colecciones que se siguen en vivo están confirmadas por el servidor y sin
+  // escrituras pendientes
+  const [syncByCollection, setSyncByCollection] = useState<Record<LiveCollection, SnapshotInfo>>(
     () =>
       Object.fromEntries(
-        USER_COLLECTIONS.map((name) => [name, { fromServer: false, hasPendingWrites: false }])
-      ) as Record<UserCollection, SnapshotInfo>
+        LIVE_COLLECTIONS.map((name) => [name, { fromServer: false, hasPendingWrites: false }])
+      ) as Record<LiveCollection, SnapshotInfo>
   );
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -712,7 +676,7 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
     };
   }, []);
 
-  const trackSync = (name: UserCollection, info: SnapshotInfo) =>
+  const trackSync = (name: LiveCollection, info: SnapshotInfo) =>
     setSyncByCollection((current) =>
       current[name].fromServer === info.fromServer && current[name].hasPendingWrites === info.hasPendingWrites
         ? current
@@ -767,26 +731,6 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
             firstRunChecked.current = true;
             if (logs.length === 0 && !hasNavigated.current) setActiveTab('wheel');
           }
-        },
-        onError
-      ),
-      subscribeToCollection(
-        db,
-        uid,
-        'meetings',
-        (items, info) => {
-          setMeetings(items);
-          trackSync('meetings', info);
-        },
-        onError
-      ),
-      subscribeToCollection(
-        db,
-        uid,
-        'emails',
-        (items, info) => {
-          setEmails(items);
-          trackSync('emails', info);
         },
         onError
       ),
@@ -1058,31 +1002,6 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
     showToast(m.assessmentSaved);
   };
 
-  const handleSaveMeeting = (meetingData: Omit<MeetingGuard, 'id' | 'createdAt'>) => {
-    const meeting: MeetingGuard = {
-      ...meetingData,
-      id: `meet-${Date.now()}`,
-      userId: uid,
-      createdAt: new Date().toISOString()
-    };
-    saveMeeting(db, uid, meeting).catch(reportError(m.actions.saveMeeting));
-    showToast(m.meetingSaved);
-  };
-
-  const handleSaveEmail = (email: EmailDraft, kind: EmailSaveKind) => {
-    saveEmail(db, uid, { ...email, userId: uid }).catch(reportError(m.actions.saveEmail));
-    showToast(kind === 'saved' ? m.emailSaved : kind === 'draft' ? m.emailDraftSaved : m.emailAutoDraft);
-  };
-  const handleDeleteEmail = (email: EmailDraft) => {
-    deleteEmail(db, uid, email.id).catch(reportError(m.actions.deleteEmail));
-    showToast(isDraft(email) ? m.draftDeleted : m.emailDeleted, () => {
-      showToast(m.undoing);
-      restoreDeletedEmail(db, uid, email)
-        .then((done) => showToast(done ? m.emailRestored : m.emailChanged))
-        .catch(reportError(m.actions.restoreEmail));
-    });
-  };
-
   // CUENTA
   const handleExportData = () => downloadAccountData(services, user);
   // IMPORTAR LA DESCARGA DE LA CUENTA: primero la vista previa (qué entra y qué ya está); al confirmar, se escribe
@@ -1315,8 +1234,6 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
     isTaskModalOpen ||
     isArchiveOpen ||
     isDraftsOpen ||
-    isMeetingModalOpen ||
-    emailEditor !== null ||
     isAccountMenuOpen ||
     isAccessibilityOpen ||
     isImportOpen ||
@@ -1518,7 +1435,6 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
                 top10Count={top10Count}
                 wheelLogs={wheelLogs}
                 wheelAverage={wheelAverage}
-                meetings={meetings}
                 now={now}
                 onOpenAccount={() => setIsAccountMenuOpen(true)}
                 onNavigate={navigate}
@@ -1548,12 +1464,11 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
               />
             )}
 
-            {/* AGENDA: tareas con fecha de las dos listas, repeticiones previstas y reuniones */}
+            {/* AGENDA: tareas con fecha de las dos listas y repeticiones previstas */}
             {activeTab === 'agenda' && (
               <DeferredSection retry={AgendaView.retry}>
                 <AgendaView
                   tasks={tasks}
-                  meetings={meetings}
                   onEditTask={(task) => {
                     setEditingTask(task);
                     setIsTaskModalOpen(true);
@@ -1629,21 +1544,7 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
               </DeferredSection>
             )}
 
-            {/* PESTAÑA 3: BLINDAJE BERMUDAS (MÓDULO 5) */}
-            {activeTab === 'bermudas' && (
-              <DeferredSection retry={BermudasShield.retry}>
-                <BermudasShield
-                  meetings={meetings}
-                  emails={emails}
-                  onOpenNewMeeting={() => setIsMeetingModalOpen(true)}
-                  onOpenNewEmail={() => setEmailEditor({})}
-                  onOpenEmail={(email) => setEmailEditor({ email })}
-                  onDeleteEmail={handleDeleteEmail}
-                />
-              </DeferredSection>
-            )}
-
-            {/* PESTAÑA 4: CÓMO FUNCIONA LA APP */}
+            {/* PESTAÑA 3: CÓMO FUNCIONA LA APP */}
             {activeTab === 'help' && (
               <DeferredSection retry={HowItWorks.retry}>
                 <HowItWorks
@@ -1827,19 +1728,7 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
           onDeleteTask={handleDeleteTask}
         />
 
-        {/* MODAL 2: AGENDA DE REUNIONES CON TRIPLE VALIDACIÓN Y BLOQUEO MATUTINO */}
-        <MeetingModal
-          isOpen={isMeetingModalOpen}
-          onClose={() => setIsMeetingModalOpen(false)}
-          onSaveMeeting={handleSaveMeeting}
-        />
-
-        {/* MODAL 3: CORREO CON REDACCIÓN INVERSA Y ALERTA NO-SCROLL */}
-        {emailEditor && (
-          <EmailModal email={emailEditor.email} onClose={() => setEmailEditor(null)} onSave={handleSaveEmail} />
-        )}
-
-        {/* MODAL 4: CUENTA (CERRAR SESIÓN, DESCARGAR DATOS, ELIMINAR CUENTA) */}
+        {/* MODAL 2: CUENTA (CERRAR SESIÓN, DESCARGAR DATOS, ELIMINAR CUENTA) */}
         <AccountMenu
           isOpen={isAccountMenuOpen}
           onClose={() => setIsAccountMenuOpen(false)}
@@ -1961,7 +1850,7 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
           </DeferredDialog>
         )}
 
-        {/* MODAL 5: IMPORTAR DATOS DE LA VERSIÓN SIN CUENTAS */}
+        {/* MODAL 3: IMPORTAR DATOS DE LA VERSIÓN SIN CUENTAS */}
         {isImportOpen && (
           <ImportLocalDataModal
             profiles={localProfiles}

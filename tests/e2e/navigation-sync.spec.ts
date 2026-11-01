@@ -34,7 +34,6 @@ test('phones use a bottom section bar, a «Más» sheet and a floating «Nueva t
   await expect(sheet.getByRole('navigation').getByRole('button')).toHaveText([
     'Rueda de la Vida',
     'Proyectos',
-    'Tiempo protegido',
     'Ayuda'
   ]);
   await expect(
@@ -42,16 +41,13 @@ test('phones use a bottom section bar, a «Más» sheet and a floating «Nueva t
   ).toHaveCount(1);
   await expect(sheet.getByRole('button', { name: 'Tu cuenta' })).toBeVisible();
 
-  await sheet.getByRole('button', { name: 'Tiempo protegido', exact: true }).click();
+  await sheet.getByRole('button', { name: 'Ayuda', exact: true }).click();
   await expect(sheet).toBeHidden();
-  await expect(page.getByRole('heading', { name: 'Protege tu tiempo' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ayuda', exact: true })).toBeVisible();
 
   // Escape cierra la hoja, que marca la sección activa, y el foco vuelve a «Más»
   await more.click();
-  await expect(sheet.getByRole('button', { name: 'Tiempo protegido', exact: true })).toHaveAttribute(
-    'aria-current',
-    'page'
-  );
+  await expect(sheet.getByRole('button', { name: 'Ayuda', exact: true })).toHaveAttribute('aria-current', 'page');
   await page.keyboard.press('Escape');
   await expect(sheet).toBeHidden();
   await expect(more).toBeFocused();

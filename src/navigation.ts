@@ -5,7 +5,6 @@ import {
   CalendarDays,
   Compass,
   LayoutDashboard,
-  ShieldCheck,
   Target,
   UserCheck,
   type LucideIcon
@@ -35,7 +34,6 @@ const m = messages<{ sections: SectionNames; pending: (n: number) => string }>(
       wheel: { label: 'Rueda de la Vida', short: 'Rueda' },
       goals: { label: 'Metas', short: 'Metas' },
       projects: { label: 'Proyectos', short: 'Proyectos' },
-      bermudas: { label: 'Tiempo protegido', short: 'Tiempo' },
       help: { label: 'Ayuda', short: 'Ayuda' },
       access: { label: 'Administración', short: 'Administración' }
     },
@@ -49,7 +47,6 @@ const m = messages<{ sections: SectionNames; pending: (n: number) => string }>(
       wheel: { label: 'Wheel of Life', short: 'Wheel' },
       goals: { label: 'Goals', short: 'Goals' },
       projects: { label: 'Projects', short: 'Projects' },
-      bermudas: { label: 'Protected time', short: 'Time' },
       help: { label: 'Help', short: 'Help' },
       access: { label: 'Admin', short: 'Admin' }
     },
@@ -64,7 +61,6 @@ export const SECTIONS: Section[] = [
   { tab: 'wheel', ...m.sections.wheel, icon: Compass },
   { tab: 'goals', ...m.sections.goals, icon: Target },
   { tab: 'projects', ...m.sections.projects, icon: FolderKanban },
-  { tab: 'bermudas', ...m.sections.bermudas, icon: ShieldCheck },
   { tab: 'help', ...m.sections.help, icon: BookOpen, iconOnly: true }
 ];
 

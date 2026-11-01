@@ -98,9 +98,6 @@ test('main sections, forms and dialogs', async ({ page }) => {
   await page.getByRole('button', { name: 'Por días' }).click();
   await expectNoViolations(page, 'agenda (por días)');
 
-  await page.getByRole('button', { name: 'Tiempo protegido', exact: true }).click();
-  await expectNoViolations(page, 'blindaje bermudas');
-
   await page.getByRole('button', { name: 'Ayuda', exact: true }).click();
   await expectNoViolations(page, 'cómo funciona');
 
@@ -119,16 +116,6 @@ test('main sections, forms and dialogs', async ({ page }) => {
   await page.getByRole('button', { name: /Archivadas/ }).click();
   await expect(page.getByRole('dialog', { name: 'Tareas archivadas' })).toBeVisible();
   await expectNoViolations(page, 'tareas archivadas');
-  await page.keyboard.press('Escape');
-
-  await page.getByRole('button', { name: 'Tiempo protegido', exact: true }).click();
-  await page.getByRole('button', { name: 'Planificar una reunión' }).click();
-  await expect(page.getByRole('dialog', { name: 'Nueva reunión' })).toBeVisible();
-  await expectNoViolations(page, 'formulario de reunión');
-  await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Escribir un correo' }).click();
-  await expect(page.getByRole('dialog')).toBeVisible();
-  await expectNoViolations(page, 'formulario de correo');
   await page.keyboard.press('Escape');
 
   // Pantalla de inicio: aparece al cargar la app y dura poco, así que se audita solo ella
@@ -460,21 +447,6 @@ test('task alarm: the field in the form and the alert', async ({ page }) => {
   await page.clock.fastForward('03:00');
   await expect(page.getByRole('region', { name: `Alarma: ${title}` })).toBeVisible();
   await expectNoViolations(page, 'aviso de alarma');
-});
-
-test('e-mail drafts: the list and the editor with attachments', async ({ page }) => {
-  await page.goto('/');
-  await signInWithGoogle(page);
-  await openSection(page, 'Tiempo protegido');
-  await page.getByRole('button', { name: 'Escribir un correo' }).click();
-  const chooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Elegir archivos' }).click();
-  await (await chooser).setFiles({ name: 'acta.pdf', mimeType: 'application/pdf', buffer: Buffer.alloc(2048) });
-  await page.getByLabel(/^Paso 3: Asunto/).fill('Acta de la reunión');
-  await expectNoViolations(page, 'correo con adjuntos');
-  await page.keyboard.press('Escape');
-  await expect(page.getByRole('region', { name: 'Borradores (1)' })).toBeVisible();
-  await expectNoViolations(page, 'tiempo protegido con borradores');
 });
 
 test('admin messages: the reply form and a sent reply', async ({ page }) => {

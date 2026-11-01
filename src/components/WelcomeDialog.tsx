@@ -1,14 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  ArrowDown,
-  ArrowRight,
-  CalendarDays,
-  Compass,
-  FolderKanban,
-  ListChecks,
-  ShieldCheck,
-  Target
-} from 'lucide-react';
+import { ArrowDown, ArrowRight, CalendarDays, Compass, FolderKanban, ListChecks, Target } from 'lucide-react';
 import { useModalFocus } from '../hooks/useModalFocus';
 import type { OnboardingOutcome } from '../services/onboarding';
 import { BRAND_NAME, BrandMark } from './BrandMark';
@@ -19,7 +10,7 @@ interface WelcomeDialogProps {
   onFinish: (outcome: OnboardingOutcome) => void;
 }
 
-// El método de un vistazo: de lo que te importa (áreas) a lo que haces hoy (Top 10 y Agenda), con el tiempo protegido.
+// El método de un vistazo: de lo que te importa (áreas) a lo que haces hoy (Top 10 y Agenda).
 // Los proyectos son opcionales: una forma de agrupar tareas relacionadas de una meta
 type Item = { title: string; text: string };
 
@@ -46,8 +37,7 @@ const m = messages<{
         text: 'Si una meta, o una parte de ella, necesita varias tareas relacionadas, agrúpalas en un proyecto con fecha de fin. Una meta puede tener uno o varios.'
       },
       { title: 'Tareas', text: 'Acciones físicas concretas para cada meta, en Profesional o Personal.' },
-      { title: 'Top 10 y Agenda', text: 'Qué hacer hoy y cuándo, con alarmas antes del plazo.' },
-      { title: 'Tiempo protegido', text: 'Mañanas sin reuniones y correos escritos en orden.' }
+      { title: 'Top 10 y Agenda', text: 'Qué hacer hoy y cuándo, con alarmas antes del plazo.' }
     ],
     routine: [
       { title: 'Evalúa tu Rueda', text: 'Puntúa cada área del 0 al 10. Te lleva dos minutos.' },
@@ -57,7 +47,7 @@ const m = messages<{
       },
       {
         title: 'Protege tu tiempo',
-        text: 'Cada día, el Top 10 te dice qué toca. En «Tiempo protegido» reservas las mañanas sin reuniones y escribes los correos en orden.'
+        text: 'Cada día, el Top 10 te dice qué toca. Reserva las mañanas sin reuniones para hacerlo: en la Ayuda tienes más recomendaciones.'
       }
     ],
     steps: ['Por qué', 'El método', 'Cómo empezar'],
@@ -88,8 +78,7 @@ const m = messages<{
         text: 'If a goal, or part of one, needs several related tasks, group them into a project with an end date. A goal can have one or more.'
       },
       { title: 'Tasks', text: 'Concrete physical actions for each goal, in Work or Personal.' },
-      { title: 'Top 10 and Agenda', text: 'What to do today and when, with alarms before the deadline.' },
-      { title: 'Protected time', text: 'Meeting-free mornings and emails written in order.' }
+      { title: 'Top 10 and Agenda', text: 'What to do today and when, with alarms before the deadline.' }
     ],
     routine: [
       { title: 'Assess your Wheel', text: 'Score each area from 0 to 10. It takes two minutes.' },
@@ -99,7 +88,7 @@ const m = messages<{
       },
       {
         title: 'Protect your time',
-        text: 'Each day, the Top 10 tells you what’s next. In “Protected time” you keep your mornings free of meetings and write your emails in order.'
+        text: 'Each day, the Top 10 tells you what’s next. Keep your mornings free of meetings to do it: Help has more tips.'
       }
     ],
     steps: ['Why', 'The method', 'How to start'],
@@ -124,7 +113,7 @@ const m = messages<{
 );
 
 // Iconos de cada paso del modelo, en el orden del catálogo
-const MODEL_ICONS = [Compass, Target, FolderKanban, ListChecks, CalendarDays, ShieldCheck];
+const MODEL_ICONS = [Compass, Target, FolderKanban, ListChecks, CalendarDays];
 const MODEL = m.model.map((item, index) => ({ ...item, icon: MODEL_ICONS[index] }));
 const ROUTINE = m.routine;
 const STEPS = m.steps;

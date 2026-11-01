@@ -11,7 +11,7 @@ import {
   Target,
   Timer
 } from 'lucide-react';
-import { AppTab, Goal, ListContext, MeetingGuard, Project, TaskItem, WheelOfLifeLog } from '../types';
+import { AppTab, Goal, ListContext, Project, TaskItem, WheelOfLifeLog } from '../types';
 import { sortGoals } from '../services/goals';
 import { GoalProgress } from './GoalProgress';
 import { computeStats, recommendationsFor } from '../services/stats';
@@ -30,7 +30,6 @@ interface HomeViewProps {
   top10Count: number;
   wheelLogs: WheelOfLifeLog[];
   wheelAverage: string;
-  meetings: MeetingGuard[];
   now: Date;
   onOpenAccount: () => void;
   onNavigate: (tab: AppTab) => void;
@@ -54,8 +53,6 @@ const m = messages(
     priorityTasks: 'tareas prioritarias',
     wheel: 'Rueda de la Vida',
     evaluations: (n: number) => `${n} ${n === 1 ? 'evaluación' : 'evaluaciones'}`,
-    meetings: 'Reuniones',
-    freeMornings: 'Mañanas libres',
     performance: 'Tu rendimiento',
     tasksDone: 'Tareas hechas',
     today: 'Hoy',
@@ -121,8 +118,6 @@ const m = messages(
     priorityTasks: 'priority tasks',
     wheel: 'Wheel of Life',
     evaluations: (n) => `${n} ${n === 1 ? 'assessment' : 'assessments'}`,
-    meetings: 'Meetings',
-    freeMornings: 'Free mornings',
     performance: 'Your performance',
     tasksDone: 'Tasks done',
     today: 'Today',
@@ -211,7 +206,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
   top10Count,
   wheelLogs,
   wheelAverage,
-  meetings,
   now,
   onOpenAccount,
   onNavigate
@@ -269,7 +263,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <p className="text-xs leading-relaxed text-slate-600 sm:text-sm">{m.intro}</p>
           </div>
 
-          <div className="grid min-w-0 shrink-0 grid-cols-3 gap-2 sm:gap-3">
+          <div className="grid min-w-0 shrink-0 grid-cols-2 gap-2 sm:gap-3">
             {[
               { label: m.top10, value: `${top10Count}/10`, hint: m.priorityTasks, hintClass: 'text-indigo-600' },
               {
@@ -277,12 +271,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 value: `${wheelAverage}/10`,
                 hint: m.evaluations(wheelLogs.length),
                 hintClass: 'text-emerald-700'
-              },
-              {
-                label: m.meetings,
-                value: String(meetings.length),
-                hint: m.freeMornings,
-                hintClass: 'text-amber-700'
               }
             ].map(({ label, value, hint, hintClass }) => (
               <div
