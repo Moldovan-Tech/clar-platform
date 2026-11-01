@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  getCountFromServer,
   getDocsFromServer,
   onSnapshot,
   query,
@@ -37,6 +38,9 @@ export const USER_COLLECTIONS: UserCollection[] = [
 // ni se crean: los guardados siguen en la cuenta, van en la descarga, la importación los trae y se borran con la cuenta
 export type LiveCollection = Exclude<UserCollection, 'meetings' | 'emails'>;
 export const LIVE_COLLECTIONS: LiveCollection[] = ['tasks', 'wheelLogs', 'goals', 'projects', 'taskDrafts'];
+// Las retiradas no están en la caché del dispositivo (nada las sigue): se leen siempre del servidor. Sin conexión, la
+// lectura falla y se avisa, en vez de dejarlas fuera sin decir nada
+const RETIRED_COLLECTIONS: UserCollection[] = ['meetings', 'emails'];
 
 export interface UserData {
   tasks: TaskItem[];
@@ -347,11 +351,30 @@ export const importUserData = (db: Firestore, uid: string, data: UserData) =>
 export const exportUserData = async (db: Firestore, uid: string): Promise<UserData> => {
   const entries = await Promise.all(
     USER_COLLECTIONS.map(async (name) => {
-      const snapshot = await getDocs(userCollection(db, uid, name));
+      const read = RETIRED_COLLECTIONS.includes(name) ? getDocsFromServer : getDocs;
+      const snapshot = await read(userCollection(db, uid, name));
       return [name, snapshot.docs.map((d) => d.data())] as const;
     })
   );
   return Object.fromEntries(entries) as unknown as UserData;
+};
+
+// Reuniones y correos guardados con versiones anteriores a la 1.3.0: cuántos quedan y borrarlos (menú de la cuenta)
+export const countRetiredItems = async (db: Firestore, uid: string) => {
+  const counts = await Promise.all(
+    RETIRED_COLLECTIONS.map(async (name) => (await getCountFromServer(userCollection(db, uid, name))).data().count)
+  );
+  return counts.reduce((sum, n) => sum + n, 0);
+};
+export const deleteRetiredItems = async (db: Firestore, uid: string) => {
+  const snapshots = await Promise.all(
+    RETIRED_COLLECTIONS.map((name) => getDocsFromServer(userCollection(db, uid, name)))
+  );
+  await commitInBatches(db, [
+    ...snapshots.flatMap((snapshot) =>
+      snapshot.docs.map((d) => (batch: ReturnType<typeof writeBatch>) => batch.delete(d.ref))
+    )
+  ]);
 };
 
 export const deleteAllUserData = async (db: Firestore, uid: string) => {

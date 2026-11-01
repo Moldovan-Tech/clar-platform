@@ -45,6 +45,8 @@ const m = messages(
     hidden: ' (oculta)',
     quote: (label: string) => `«${label}»`,
     nothingNew: 'Ya tienes en tu cuenta todo lo de este archivo.',
+    retired:
+      'Las reuniones y los correos se guardan en tu cuenta y van en tu descarga, pero la app ya no los muestra («Tiempo protegido» está ahora en la Ayuda como recomendaciones).',
     progress: (done: number, total: number) => `Importando… ${done} de ${total}`,
     progressLabel: 'Avance de la importación',
     cancel: 'Cancelar',
@@ -78,6 +80,8 @@ const m = messages(
     hidden: ' (hidden)',
     quote: (label) => `“${label}”`,
     nothingNew: 'Everything in this file is already in your account.',
+    retired:
+      'Meetings and emails are saved in your account and included in your download, but the app no longer shows them (“Protected time” is now tips in the Help).',
     progress: (done, total) => `Importing… ${done} of ${total}`,
     progressLabel: 'Import progress',
     cancel: 'Cancel',
@@ -242,6 +246,9 @@ export const ImportAccountDialog: React.FC<ImportAccountDialogProps> = ({ plan, 
             </p>
           )}
           {!hasWork && rows.length > 0 && <p className="text-xs font-medium text-slate-700">{m.nothingNew}</p>}
+          {rows.some((name) => name === 'meetings' || name === 'emails') && (
+            <p className="text-xs text-slate-600">{m.retired}</p>
+          )}
 
           {progress && !error && (
             <div className="space-y-1">

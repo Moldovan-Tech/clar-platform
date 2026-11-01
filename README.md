@@ -19,7 +19,7 @@ Funciona sin conexión y en español o en inglés. Pruébala en **https://clar.l
 > Este proyecto no está afiliado ni respaldado por el autor. Hasta la versión 0.7 se llamaba NeuroProductividad.
 
 CLAR no es una herramienta clínica ni científica: aplica ideas sencillas de gestión del tiempo (prioridades claras,
-tareas concretas y tiempo protegido frente a interrupciones) para que sepas qué hacer ahora sin perderte en listas
+tareas concretas y proteger tu tiempo de las interrupciones) para que sepas qué hacer ahora sin perderte en listas
 infinitas.
 
 ## In English

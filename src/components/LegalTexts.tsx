@@ -71,8 +71,9 @@ const PrivacyPolicyEs: React.FC = () => (
           Vida (tu puntuación de 0 a 10 en cada área, y los nombres de tus áreas si las cambias o añades). Sirven para
           que la app funcione. Si guardaste reuniones o correos en «Tiempo protegido» con una versión anterior (asunto,
           texto, destinatarios y el nombre y el tamaño de los adjuntos: los archivos no salieron de tu dispositivo), se
-          conservan en tu cuenta aunque la app ya no los muestre: van en «Descargar mis datos» y se eliminan con tu
-          cuenta. Pueden incluir el nombre y el email de otras personas.
+          conservan en tu cuenta aunque la app ya no los muestre: van en «Descargar mis datos» y puedes eliminarlos
+          desde el menú de tu cuenta (si no, se eliminan con tu cuenta). Pueden incluir el nombre y el email de otras
+          personas.
         </li>
         <li>
           <strong>Registro de acceso:</strong> tu nombre, email y foto, el estado de tu acceso y sus fechas y, si pides
@@ -218,6 +219,10 @@ const PrivacyPolicyEs: React.FC = () => (
     <Section id="privacy-retention" title="Cuánto tiempo se guardan">
       <List>
         <li>Tu cuenta y lo que escribes: hasta que lo borres o elimines la cuenta.</li>
+        <li>
+          Reuniones y correos de versiones anteriores: hasta que los elimines desde el menú de tu cuenta o elimines la
+          cuenta.
+        </li>
         <li>Registro de acceso y mensajes de «Escríbenos»: hasta que elimines la cuenta.</li>
         <li>
           Registros técnicos: los de CLAR (Cloud Logging), 30 días. Los que guardan los servicios de Google para
@@ -511,8 +516,9 @@ const PrivacyPolicyEn: React.FC<EnglishTextProps> = ({ onShowSpanish }) => (
           10 in each area, and the names of your areas if you change them or add your own). This data is used to make
           the app work. If you saved meetings or emails in “Protected time” with an earlier version (subject, text,
           recipients and the name and size of attachments: the files never left your device), they are kept in your
-          account even though the app no longer shows them: they are included in “Download my data” and deleted with
-          your account. They may include other people's names and email addresses.
+          account even though the app no longer shows them: they are included in “Download my data” and you can delete
+          them from your account menu (otherwise they are deleted with your account). They may include other people's
+          names and email addresses.
         </li>
         <li>
           <strong>Access record:</strong> your name, email and photo, the status of your access and its dates and, if
@@ -657,6 +663,10 @@ const PrivacyPolicyEn: React.FC<EnglishTextProps> = ({ onShowSpanish }) => (
     <Section id="privacy-retention" title="How long we keep it">
       <List>
         <li>Your account and what you write: until you delete it or delete your account.</li>
+        <li>
+          Meetings and emails from earlier versions: until you delete them from your account menu or delete your
+          account.
+        </li>
         <li>Access record and “Contact us” messages: until you delete your account.</li>
         <li>
           Technical logs: CLAR's own (Cloud Logging), 30 days. Those that Google's services keep to work follow their

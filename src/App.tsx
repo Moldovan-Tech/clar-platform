@@ -49,7 +49,9 @@ import {
   subscribeToCollection,
   LIVE_COLLECTIONS,
   type LiveCollection,
-  type SnapshotInfo
+  type SnapshotInfo,
+  countRetiredItems,
+  deleteRetiredItems
 } from './services/repository';
 import { buildImport, clearLocalData, getLocalProfiles, type LocalProfileSummary } from './services/localData';
 import { arrangeTasks, parseListPrefs, splitTop10, type ListPrefs } from './services/taskListing';
@@ -423,6 +425,21 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
     createdAt: user.metadata.creationTime ?? ''
   };
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  // Reuniones y correos de antes de la 1.3.0 que siguen en la cuenta: se cuentan al abrir el menú (en el servidor; sin
+  // conexión no se sabe y no se ofrece borrarlos)
+  const [retiredCount, setRetiredCount] = useState<number | null>(null);
+  useEffect(() => {
+    if (!isAccountMenuOpen) return;
+    let current = true;
+    countRetiredItems(db, uid)
+      .then((count) => {
+        if (current) setRetiredCount(count);
+      })
+      .catch(() => undefined);
+    return () => {
+      current = false;
+    };
+  }, [isAccountMenuOpen, db, uid]);
   const [isAccessibilityOpen, setIsAccessibilityOpen] = useState(false);
 
   // Datos de la cuenta, sincronizados en tiempo real con Firestore (y disponibles sin conexión desde la caché)
@@ -1738,6 +1755,13 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
           reauthMethods={reauthMethods}
           onExportData={handleExportData}
           onImportData={handleChooseImportFile}
+          retired={{
+            count: retiredCount,
+            onDelete: async () => {
+              await deleteRetiredItems(db, uid);
+              setRetiredCount(0);
+            }
+          }}
           push={
             pushAvailable()
               ? {

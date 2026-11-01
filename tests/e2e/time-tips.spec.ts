@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { localDateFromToday, openSection, patchDocument, signInWithGoogle, uidOf } from './helpers';
+import { localDateFromToday, openSection, patchDocument, readDocument, signInWithGoogle, uidOf } from './helpers';
 
 // «TIEMPO PROTEGIDO» se retiró en la 1.3.0: ya no es una sección y sus ideas son recomendaciones de la Ayuda. Las
 // reuniones y los correos que se guardaron antes siguen en la cuenta, pero no se ven en ninguna pantalla
@@ -16,6 +16,16 @@ const seedMeeting = async (email: string, title: string) => {
     agendaPoints: { arrayValue: { values: [text('Estado del proyecto')] } },
     moderatorName: text('Persona moderadora'),
     moderatorEmail: text(''),
+    createdAt: text(new Date().toISOString())
+  });
+};
+
+// Un correo guardado con una versión anterior
+const seedEmail = async (email: string) => {
+  const text = (value: string) => ({ stringValue: value });
+  await patchDocument(`users/${await uidOf(email)}/emails/mail-legacy`, {
+    id: text('mail-legacy'),
+    subject: text('Resumen semanal'),
     createdAt: text(new Date().toISOString())
   });
 };
@@ -80,8 +90,42 @@ test('in English, the Help has the tips to protect your time and there is no «P
   await expectTips(page, 'Tips to protect your time', [
     /Bermuda Triangle.*meetings, email and messages/,
     /mornings free of meetings.*12:00.*early afternoon/,
-    /end time, a closed agenda and someone to moderate it/,
+    /end time, a set agenda and someone to moderate it/,
     /start with the content and the attachments, and choose the recipients last/,
     /email and messages in batches, at set times/
   ]);
+});
+
+test('the account menu deletes the meetings and emails saved with earlier versions, after confirming', async ({
+  page
+}) => {
+  await page.goto('/');
+  const email = await signInWithGoogle(page);
+  await seedMeeting(email, 'Revisión semanal');
+  await seedEmail(email);
+  const uid = await uidOf(email);
+
+  await page.getByRole('button', { name: 'Tu cuenta' }).click();
+  const account = page.getByRole('dialog', { name: 'Tu cuenta' });
+  const remove = account.getByRole('button', { name: 'Eliminar las 2 reuniones y correos de versiones anteriores' });
+  await expect(remove).toBeVisible();
+
+  // Cancelar no borra nada
+  await remove.click();
+  await expect(account.getByRole('alert')).toContainText('Se borrarán para siempre');
+  await account.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  expect(await readDocument(`users/${uid}/meetings/meet-legacy`)).not.toBeNull();
+
+  await remove.click();
+  await account.getByRole('alert').getByRole('button', { name: 'Eliminar', exact: true }).click();
+  await expect(account).toContainText('Eliminados.');
+  await expect(remove).toHaveCount(0);
+  expect(await readDocument(`users/${uid}/meetings/meet-legacy`)).toBeNull();
+  expect(await readDocument(`users/${uid}/emails/mail-legacy`)).toBeNull();
+
+  // Sin nada guardado de antes, el menú ya no lo ofrece
+  await account.getByRole('button', { name: 'Cerrar', exact: true }).click();
+  await page.getByRole('button', { name: 'Tu cuenta' }).click();
+  await expect(page.getByRole('dialog', { name: 'Tu cuenta' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /de versiones anteriores/ })).toHaveCount(0);
 });

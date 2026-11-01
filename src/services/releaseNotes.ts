@@ -39,12 +39,12 @@ export const RELEASE_NOTES: readonly ReleaseNote[] = [
       ),
       messages(
         {
-          title: 'Tus reuniones y correos siguen ahí',
-          text: 'Las reuniones y los correos que guardaste, también los borradores, siguen en tu cuenta: los tienes en «Descargar mis datos», en el menú de tu cuenta.'
+          title: 'Reuniones y correos guardados',
+          text: 'Si guardaste reuniones o correos (también borradores), siguen en tu cuenta y en «Descargar mis datos». Puedes eliminarlos desde el menú de tu cuenta.'
         },
         {
-          title: 'Your meetings and emails are still there',
-          text: 'The meetings and emails you saved, drafts included, are still in your account: you have them in “Download my data”, in your account menu.'
+          title: 'Saved meetings and emails',
+          text: 'If you saved meetings or emails (drafts too), they are still in your account and in “Download my data”. You can delete them from your account menu.'
         }
       )
     ]
