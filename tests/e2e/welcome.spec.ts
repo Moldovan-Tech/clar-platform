@@ -1,13 +1,37 @@
-import { expect, test } from '@playwright/test';
-import { readDocument, signInWithGoogle, uidOf } from './helpers';
+import { expect, test, type Page } from '@playwright/test';
+import { patchDocument, readDocument, signInWithGoogle, uidOf } from './helpers';
+
+// Apunta cada vez que se abre una ventana (no había ninguna y aparece una), también entre recargas
+const recordDialogs = async (page: Page) => {
+  const opened: string[] = [];
+  await page.exposeBinding('dialogOpened', (_source, text: string) => opened.push(text));
+  await page.addInitScript(() => {
+    const report = (window as unknown as { dialogOpened: (text: string) => void }).dialogOpened;
+    let open = false;
+    new MutationObserver(() => {
+      const dialog = document.querySelector('[role="dialog"]');
+      if (dialog && !open) report((dialog.textContent ?? '').slice(0, 60));
+      open = dialog !== null;
+    }).observe(document, { subtree: true, childList: true });
+  });
+  return opened;
+};
 
 test('a new account sees the welcome once: why, the method and how to start', async ({ page }) => {
+  const opened = await recordDialogs(page);
   await page.goto('/');
   const email = await signInWithGoogle(page, undefined, undefined, { onboarded: false });
 
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('heading', { name: 'Te damos la bienvenida a CLAR' })).toBeVisible();
+  const title = dialog.getByRole('heading', { name: 'Te damos la bienvenida a CLAR' });
+  await expect(title).toBeVisible();
   await expect(dialog).toContainText('Paso 1 de 3: Por qué');
+  // Se abre una sola vez: lo que la app guarda en el perfil al abrirse (el idioma, las condiciones) no la cierra
+  const uid = await uidOf(email);
+  await expect.poll(async () => (await readDocument(`users/${uid}`))?.language).toBe('es');
+  await expect.poll(async () => (await readDocument(`users/${uid}`))?.termsAcceptedAt).toBeTruthy();
+  await expect(title).toBeVisible();
+  expect(opened).toHaveLength(1);
 
   // Cada pantalla pone el foco en su título
   await dialog.getByRole('button', { name: 'Siguiente' }).click();
@@ -50,6 +74,41 @@ test('Escape skips the welcome and it is not shown again', async ({ page }) => {
   await page.reload();
   await expect(page.getByRole('button', { name: 'Nueva tarea', exact: true })).toBeVisible();
   await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
+test('the same account in a new browser does not see the welcome or the release notes again, and keeps its language', async ({
+  browser
+}) => {
+  test.slow(); // Dos navegadores, y el segundo se recarga al adoptar el idioma de la cuenta
+  // La cuenta ya vio la bienvenida y las novedades de esta versión, y está en inglés (después de que el primer
+  // navegador guarde el suyo, para que no lo pise)
+  const first = await (await browser.newContext()).newPage();
+  await first.goto('/');
+  const email = await signInWithGoogle(first);
+  const uid = await uidOf(email);
+  await expect.poll(async () => (await readDocument(`users/${uid}`))?.language).toBe('es');
+  await patchDocument(`users/${uid}`, { language: { stringValue: 'en' } });
+  await first.context().close();
+
+  // Otro navegador, sin nada guardado (ni la caché del perfil)
+  const page = await (await browser.newContext()).newPage();
+  const opened = await recordDialogs(page);
+  await page.goto('/');
+  await signInWithGoogle(page, email, undefined, { approve: false, onboarded: false });
+
+  // Adopta el idioma de la cuenta sin cambiarlo. Si la app se recarga sola mientras se lee, ese intento no cuenta, y
+  // su recarga puede cortar la de la prueba (ERR_ABORTED): la página acaba cargada igual
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('clar_locale')).catch(() => null), { timeout: 30_000 })
+    .toBe('en');
+  await page.reload().catch((e: Error) => {
+    if (!e.message.includes('ERR_ABORTED')) throw e;
+  });
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en', { timeout: 15_000 });
+  await expect(page.getByRole('button', { name: /^Synced with the server/ })).toBeVisible({ timeout: 15_000 });
+  expect((await readDocument(`users/${uid}`))?.language).toBe('en');
+  // Y no se abre ninguna ventana: ni la bienvenida ni las novedades
+  expect(opened).toEqual([]);
 });
 
 test('with data from the version without accounts, the import comes first and the welcome after it', async ({

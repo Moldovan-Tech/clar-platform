@@ -24,6 +24,22 @@ const released = (year: number, month: number) => monthFormat.format(Date.UTC(ye
 
 export const RELEASE_NOTES: readonly ReleaseNote[] = [
   {
+    version: '1.3.1',
+    month: released(2026, 11),
+    changes: [
+      messages(
+        {
+          title: 'Arreglos',
+          text: 'Al entrar con tu cuenta desde otro navegador o dispositivo, CLAR ya no vuelve a mostrar la bienvenida, y se abre en el idioma de tu cuenta en lugar de cambiarlo por el del navegador.'
+        },
+        {
+          title: 'Fixes',
+          text: "When you sign in from another browser or device, CLAR no longer shows the welcome again, and it opens in your account's language instead of replacing it with the browser's."
+        }
+      )
+    ]
+  },
+  {
     version: '1.3.0',
     month: released(2026, 11),
     changes: [

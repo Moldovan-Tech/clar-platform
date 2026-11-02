@@ -13,5 +13,5 @@
 
   <!-- Versión -->
   <rect x="490" y="1190" width="100" height="34" rx="17" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-  <text x="540" y="1213" text-anchor="middle" font-family="monospace" font-size="14" font-weight="bold" fill="#a5b4fc">v1.3.0</text>
+  <text x="540" y="1213" text-anchor="middle" font-family="monospace" font-size="14" font-weight="bold" fill="#a5b4fc">v1.3.1</text>
 </svg>

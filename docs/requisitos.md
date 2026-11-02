@@ -1,9 +1,9 @@
 # Requisitos del sistema — CLAR
 
-- **Versión:** 1.3.0
-- **Última revisión:** 2026-11-01
+- **Versión:** 1.3.1
+- **Última revisión:** 2026-11-02
 
-Este documento describe qué hace CLAR en la versión 1.3.0: sus requisitos funcionales y no funcionales tal como están implementados en el código de esta versión (la SPA de `src/`, las Cloud Functions de `functions/src/`, las reglas de Firestore, la configuración de Firebase Hosting y las pruebas). No recoge planes ni funciones futuras. Donde el README y el código no coinciden, manda el código.
+Este documento describe qué hace CLAR en la versión 1.3.1: sus requisitos funcionales y no funcionales tal como están implementados en el código de esta versión (la SPA de `src/`, las Cloud Functions de `functions/src/`, las reglas de Firestore, la configuración de Firebase Hosting y las pruebas). No recoge planes ni funciones futuras. Donde el README y el código no coinciden, manda el código.
 
 **Convenciones.** RF: requisito funcional. RNF: requisito no funcional. Los identificadores son estables: un requisito nuevo toma el siguiente número libre de su sección y uno retirado no se reutiliza. Los textos entre «» son etiquetas de la interfaz. «Origen» señala los archivos principales de cada sección.
 
@@ -292,7 +292,7 @@ Origen: `src/AuthGate.tsx`, `src/AccessGate.tsx`, `src/services/auth.ts`, `src/s
 **Primera vez**
 
 - **RF-CUE-20.** La bienvenida se muestra una sola vez por cuenta, en tres pantallas («Por qué», «El método» y «Cómo empezar»). «El método» va de las áreas de vida a las metas, los proyectos (opcionales: uno o varios por meta para agrupar tareas relacionadas), las tareas, y el Top 10 y la Agenda. El último paso de «Cómo empezar» propone reservar las mañanas sin reuniones y remite a las recomendaciones de la Ayuda. Se salta en cualquier momento con «Saltar» o Escape.
-- **RF-CUE-21.** Que la bienvenida ya se vio se guarda en el perfil y en el dispositivo, así no se repite sin conexión ni en otro dispositivo. Mientras el perfil no llega del servidor, la bienvenida espera.
+- **RF-CUE-21.** Que la bienvenida ya se vio se guarda en el perfil y en el dispositivo, así no se repite sin conexión ni en otro dispositivo. Hasta que el servidor confirma el perfil (también lo que la app guarda al entrar), la bienvenida, las novedades (RF-NAV-12) y el idioma de la cuenta (RF-CUE-33) esperan; una vez confirmado, sigue así.
 - **RF-CUE-22.** Al terminar la bienvenida empieza un recorrido guiado de 10 pasos por los elementos principales (entre ellos, «Proyectos (opcional)», en el móvil dentro de «Más»), que empieza en «Listas». Se maneja con las flechas y Escape, y salta los pasos cuyo elemento no se ve.
 - **RF-CUE-23.** Al acabar el recorrido de la primera vez, la app abre la Rueda si la cuenta aún no tiene evaluaciones.
 - **RF-CUE-24.** Si el navegador guarda datos de la versión anterior sin cuentas, la app ofrece importarlos en el primer inicio de sesión, antes de la bienvenida. Se eligen los perfiles que importar (con sus tareas, evaluaciones, reuniones y correos; estos dos se guardan sin pantalla, ver 1.7); los datos de demostración nunca se importan.

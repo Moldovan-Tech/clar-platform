@@ -256,6 +256,11 @@ La lista completa y numerada de lo que hace la app, con sus requisitos no funcio
 - **Recomendaciones en la Ayuda:** «Recomendaciones para proteger tu tiempo» / “Tips to protect your time” (`HowItWorks`), solo consejos, sin botones ni referencias a pantallas (ver [Proteger el tiempo](#6-proteger-el-tiempo-el-triángulo-de-las-bermudas)).
 - **Los datos se conservan:** `users/{uid}/meetings` y `users/{uid}/emails` ya no se siguen en vivo (`LIVE_COLLECTIONS`, que también decide el indicador de sincronización), pero siguen en `USER_COLLECTIONS`: van en «Descargar mis datos», la importación los trae y se borran con la cuenta. Las reglas los siguen admitiendo para la importación. La política de privacidad lo explica (versión del 1 de noviembre de 2026).
 
+### Otro navegador, la misma cuenta (1.3.1)
+
+- **Arreglo:** en un navegador nuevo (sin caché), lo que la app guarda al entrar (`saveUserProfile`) llegaba al perfil como «del servidor» antes que el resto. La app volvía a mostrar la bienvenida y, como la cuenta parecía no tener idioma, guardaba el del navegador encima del suyo. `subscribeToProfile` da el perfil por confirmado cuando llega del servidor sin escrituras propias pendientes, y desde entonces sigue así.
+- **Idioma de la cuenta:** los 5 s para adoptarlo recargando la app cuentan desde que se abre con la sesión iniciada (`useAccountLanguage`), no desde que se carga la página: el tiempo en la página de entrada ya no cuenta.
+
 ---
 
 ## 🛠️ Stack Tecnológico
