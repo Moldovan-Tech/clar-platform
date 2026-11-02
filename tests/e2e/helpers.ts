@@ -128,9 +128,16 @@ export const signInWithGoogle = async (
 // Fecha local (YYYY-MM-DD) a N días de hoy; los campos de fecha la aceptan escrita así
 // Reloj de Playwright lejos de medianoche: las pruebas de alarmas ponen la alarma y el plazo unos minutos después de
 // ahora, y cerca de medianoche caerían en días distintos. Se atrasa o se adelanta lo justo (poco: la sesión del
-// emulador sigue valiendo). La hora es la de la página, en su zona horaria (antes de cargar nada)
-export const installClockAwayFromMidnight = async (page: Page) => {
-  const minutes = await page.evaluate(() => new Date().getHours() * 60 + new Date().getMinutes());
+// emulador sigue valiendo). La hora se calcula aquí, en la zona horaria de la prueba (la de su test.use o, sin ella, la
+// del equipo): antes de cargar nada, la página aún no tiene la zona emulada en todos los navegadores (en CI, Chromium
+// en Linux daba la hora UTC)
+export const installClockAwayFromMidnight = async (
+  page: Page,
+  timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+) => {
+  const parts = new Intl.DateTimeFormat('en-GB', { timeZone, hour: 'numeric', minute: 'numeric', hourCycle: 'h23' });
+  const value = (type: string) => Number(parts.formatToParts(new Date()).find((p) => p.type === type)?.value ?? 0);
+  const minutes = value('hour') * 60 + value('minute');
   const shift = minutes >= 22 * 60 + 50 ? -120 : minutes < 15 ? 30 : 0;
   await page.clock.install({ time: new Date(Date.now() + shift * 60_000) });
 };
