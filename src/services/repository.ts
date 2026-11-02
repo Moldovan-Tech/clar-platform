@@ -258,13 +258,22 @@ export const subscribeToProfile = (
   uid: string,
   onData: (profile: ProfileRecord | null, fromServer: boolean) => void,
   onError: (error: Error) => void
-) =>
-  onSnapshot(
+) => {
+  // Con escrituras propias pendientes aún no cuenta como confirmado: en un navegador nuevo (sin caché), lo que se guarda
+  // al entrar (saveUserProfile) llega como «del servidor» antes que el resto del perfil, y la cuenta parecería no haber
+  // visto la bienvenida ni tener idioma. Una vez confirmado, sigue así: lo que se guarde después va sobre el perfil
+  // entero, y la bienvenida no se cierra y se vuelve a abrir con cada escritura
+  let confirmed = false;
+  return onSnapshot(
     doc(db, 'users', uid),
     { includeMetadataChanges: true },
-    (snapshot) => onData((snapshot.data() as ProfileRecord | undefined) ?? null, !snapshot.metadata.fromCache),
+    (snapshot) => {
+      confirmed ||= !snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites;
+      onData((snapshot.data() as ProfileRecord | undefined) ?? null, confirmed);
+    },
     onError
   );
+};
 
 // Las áreas de la Rueda de la cuenta, en su orden (con las ocultas): se guardan enteras
 export const saveWheelAreas = (db: Firestore, uid: string, areas: WheelArea[]) =>
