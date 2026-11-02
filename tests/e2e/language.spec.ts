@@ -97,10 +97,12 @@ test('the account menu switches the language and saves it in the account; the ac
   await page.reload();
   await adopts('en');
 
-  // Y al revés: el dispositivo en inglés, la cuenta en español (cambiada desde otro dispositivo): manda la cuenta
+  // Y al revés: el dispositivo en inglés, la cuenta en español (cambiada desde otro dispositivo): manda la cuenta. Se
+  // cambia con la app cerrada (en un texto legal): si no, la app que aún espera el perfil lo adopta y se recarga sola
+  await page.goto('/privacidad');
   await patchDocument(`users/${uid}`, { language: { stringValue: 'es' } });
   await page.evaluate(() => localStorage.setItem('clar_locale', 'en'));
-  await page.reload();
+  await page.goto('/');
   await adopts('es');
   await expect(page.getByRole('button', { name: 'Listas', exact: true }).first()).toBeVisible();
 });
