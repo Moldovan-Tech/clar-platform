@@ -1,7 +1,7 @@
 # CLAR — decide qué hacer ahora, con claridad
 
-[![CI](https://github.com/OvidiuMM/neuroproductivity-platform/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/OvidiuMM/neuroproductivity-platform/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/OvidiuMM/neuroproductivity-platform?color=4f46e5)](https://github.com/OvidiuMM/neuroproductivity-platform/releases)
+[![CI](https://github.com/Moldovan-Tech/clar-platform/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Moldovan-Tech/clar-platform/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Moldovan-Tech/clar-platform?color=4f46e5)](https://github.com/Moldovan-Tech/clar-platform/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![React](https://img.shields.io/badge/React-19-61dafb.svg?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-7.x-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -19,7 +19,7 @@ Funciona sin conexión y en español o en inglés. Pruébala en **https://clar.l
 > Este proyecto no está afiliado ni respaldado por el autor. Hasta la versión 0.7 se llamaba NeuroProductividad.
 
 CLAR no es una herramienta clínica ni científica: aplica ideas sencillas de gestión del tiempo (prioridades claras,
-tareas concretas y tiempo protegido frente a interrupciones) para que sepas qué hacer ahora sin perderte en listas
+tareas concretas y proteger tu tiempo de las interrupciones) para que sepas qué hacer ahora sin perderte en listas
 infinitas.
 
 ## In English
@@ -34,7 +34,7 @@ offline, in Spanish or English.
 - **Run it locally** (Node.js ≥ 22.12 and Java 21 for the emulators; no Firebase account needed):
 
   ```bash
-  git clone https://github.com/OvidiuMM/neuroproductivity-platform.git && cd neuroproductivity-platform
+  git clone https://github.com/Moldovan-Tech/clar-platform.git && cd clar-platform
   npm ci && npm ci --prefix functions && npm ci --prefix tools/eslint
   npm run dev   # emulators + app; sign in with the emulated Google account admin@example.com
   ```
@@ -79,11 +79,11 @@ offline, in Spanish or English.
 3. **Proyectos (opcional):** si una meta, o una parte de ella, necesita varias tareas relacionadas, se agrupan en un proyecto con fecha de fin. Una meta puede tener ninguno, uno o varios; es una herramienta, no un paso obligatorio.
 4. **Tareas:** acciones físicas concretas, en la lista Profesional o Personal. Cada meta tiene «Añadir tarea», y una tarea vinculada toma el área de su meta; puede ir suelta o dentro de un proyecto.
 5. **Top 10 y Agenda:** qué hacer hoy y cuándo, con alarmas antes del plazo.
-6. **Tiempo protegido:** mañanas sin reuniones y correos escritos en orden.
+6. **Proteger el tiempo** (recomendaciones en la Ayuda): mañanas sin reuniones, reuniones con hora de fin y orden del día, y el correo y los mensajes a horas fijas.
 
 Al volver a evaluar la Rueda se ve el efecto de las acciones, y las áreas cambian de orden en «Metas».
 
-**Navegación:** en tableta y escritorio, la cabecera lleva las secciones (Inicio, Listas, Agenda, Rueda de la Vida, Metas, Proyectos, Tiempo protegido, Administración solo para la administración, y Ayuda), las dos listas, la sincronización y la cuenta. En el móvil, la barra inferior lleva Inicio, Listas, Agenda, Metas y «Más» (Rueda de la Vida, Proyectos, Tiempo protegido, Ayuda, Administración, la sincronización y la cuenta), con un botón flotante «Nueva tarea».
+**Navegación:** en tableta y escritorio, la cabecera lleva las secciones (Inicio, Listas, Agenda, Rueda de la Vida, Metas, Proyectos, Administración solo para la administración, y Ayuda), las dos listas, la sincronización y la cuenta. En el móvil, la barra inferior lleva Inicio, Listas, Agenda, Metas y «Más» (Rueda de la Vida, Proyectos, Ayuda, Administración, la sincronización y la cuenta), con un botón flotante «Nueva tarea».
 
 ---
 
@@ -118,7 +118,7 @@ La lista completa y numerada de lo que hace la app, con sus requisitos no funcio
 - **«Algún día»:** las ideas sin urgencia van a su propia pestaña y no compiten con el Top 10.
 - **Tareas dependientes:** una tarea puede esperar a otra (`dependsOn`, una sola; «Empieza después de», en «Más opciones»). Mientras esa siga abierta, la dependiente sale con un candado, no entra en el Top 10 (va con el resto) y no se puede marcar como hecha ni en progreso; al hacerse o cancelarse la otra se desbloquea sola, y el aviso lo dice. Varias tareas pueden esperar a la misma, en paralelo. No se pueden crear ciclos, una tarea eliminada no bloquea y la siguiente repetición de una recurrente no hereda la espera (`src/services/dependencies.ts`).
 - **Estado y archivo:** Cada tarea tiene un estado manual (Pendiente, En progreso, Bloqueada, Hecha, Cancelada). Marcarla como hecha es un toque, con «Deshacer»; el lápiz de la tarjeta, o pulsar su título, abre la edición. Las tareas hechas y las canceladas se archivan y se consultan en la ventana «Archivadas», desde donde se reactivan cambiando su estado. Una cancelada no cuenta como hecha: ni en las estadísticas ni en el avance de las metas.
-- **Cambios sin guardar:** cerrar con cambios el formulario de una tarea, una meta o un proyecto, o el editor de áreas, pregunta antes de descartarlos («Seguir editando» o «Descartar»); cerrar o recargar la pestaña con un formulario cambiado, también el de un correo, lo avisa el navegador.
+- **Cambios sin guardar:** cerrar con cambios el formulario de una tarea, una meta o un proyecto, o el editor de áreas, pregunta antes de descartarlos («Seguir editando» o «Descartar»); cerrar o recargar la pestaña con un formulario cambiado lo avisa el navegador.
 - **Fechas y colores del plazo:** Fecha límite o intervalo opcional, con hora opcional. El título se pone violeta cuando falta menos de una semana y rojo cuando ha vencido. El día que vence, hasta su hora límite, destaca con la etiqueta «Hoy» y el título en violeta oscuro y en negrita (en Listas y Proyectos, también con un borde violeta). Los campos de fecha usan un calendario propio con la semana empezando en lunes (se escriben como dd/mm/aaaa y se manejan con el teclado), sea cual sea el idioma del navegador.
 - **Alarmas:** una hora para avisar antes del plazo (ver [Alarmas](#alarmas-092)).
 - **Tareas recurrentes:** cada N días, semanas (eligiendo los días), meses (día del mes, «el 2.º lunes» o «el último viernes») o años, con N de 1 a 99 («Repetir: Cada [3] [días]», en «Más opciones»). En días y semanas, la siguiente puede ir en fechas fijas o contar desde que se hace: con «3 días después de hacerla» (`recurrence.from: 'COMPLETION'`), al completarla la siguiente vence 3 días después de ese día, sin serie en el calendario ni repeticiones previstas en la Agenda. Al repetir, «Inicio» es desde cuándo se repite y la fecha límite hasta cuándo (opcional); cada repetición vence su propio día, nunca como un intervalo. Al marcar una repetición como Hecha o Cancelada se archiva y se crea la siguiente en la misma operación (cancelar una repetición no termina la serie) (sin duplicados aunque se marque desde dos dispositivos); en fechas fijas, las ya vencidas, hora límite incluida, se saltan si se completa con retraso.
@@ -136,12 +136,10 @@ La lista completa y numerada de lo que hace la app, con sus requisitos no funcio
 - **Filtro contra Proyectos Amorfos:** Intercepta descriptores abstractos como _"Marketing"_, _"Coche"_ o _"Finanzas"_.
 - **Asistente:** pregunta «¿Cuál es el primer paso? Conviértelo en algo que puedas hacer ya.» y propone una acción concreta (por ejemplo «Llamar al taller para pedir presupuesto»), con un verbo de acción física.
 
-### 6. Tiempo protegido: el triángulo de las Bermudas
+### 6. Proteger el tiempo: el triángulo de las Bermudas
 
-- **Mañanas sin reuniones:** no deja programar reuniones antes de las 12:00 h, para reservar las mañanas al trabajo concentrado, y propone moverlas a las 13:00 h.
-- **Reuniones con lo necesario:** toda reunión exige hora de inicio y de fin (la de fin, posterior), orden del día cerrado no vacío y un moderador nominal responsable.
-- **Correos pensados antes de enviarlos:** primero los adjuntos y el cuerpo del mensaje; el campo de **Destinatarios** se desbloquea al final. Alerta en tiempo real si el texto supera la dimensión estándar libre de scroll (_no-scroll_).
-- **CLAR no envía correos:** los guarda (también a medias, como borradores), apunta de los adjuntos solo el nombre y el tamaño y, con «Abrir en mi correo», los pasa al programa de correo (ver [Borradores de correo](#borradores-de-correo-092)).
+- **Recomendaciones, no herramientas:** desde la 1.3.0, la Ayuda tiene «Recomendaciones para proteger tu tiempo» contra las tres grandes fugas (reuniones, correo y mensajes): mañanas libres de reuniones para el trabajo concentrado (ninguna antes de las 12:00) y reuniones a primera hora de la tarde; cada reunión con hora de fin, orden del día cerrado y alguien que la modere; los correos empezando por el contenido y los adjuntos, con los destinatarios al final; y el correo y los mensajes en bloques, a horas fijas.
+- **Lo guardado antes se conserva:** la sección «Tiempo protegido» (reuniones y correos) se retiró en la 1.3.0. Las reuniones y los correos que se guardaron con ella siguen en la cuenta, sin pantalla: van en «Descargar mis datos», la importación los trae y se borran con la cuenta (ver [la 1.3.0](#tiempo-protegido-a-la-ayuda-130)).
 
 ### Cuentas, Inicio, Agenda y accesibilidad
 
@@ -151,7 +149,7 @@ La lista completa y numerada de lo que hace la app, con sus requisitos no funcio
 - **Accesibilidad:** panel propio (menú de la cuenta y pantallas de inicio de sesión y acceso) con tamaño del texto, alto contraste, reducir animaciones, foco muy visible y celebraciones, guardados en cada dispositivo. Toda la app se usa con el teclado (los diálogos atrapan y devuelven el foco, enlace para saltar al contenido) y una auditoría automática WCAG 2.1 AA revisa cada pantalla en CI.
 - **Celebraciones:** al hacer una tarea que llevaba 14 días o más en la lista (las recurrentes no cuentan), lograr una meta o terminar un proyecto, el aviso añade un mensaje motivador, elegido sin repetir el último de su tipo entre al menos 12 (`src/services/celebrations.ts`), y sale un confeti breve en índigo y violeta (`CelebrationBurst`, decorativo; con menos movimiento no se ve). Solo por lo que se hace en esa pestaña y una vez por elemento y sesión; nunca al cancelar, deshacer, importar ni por cambios de otros dispositivos. Se apagan en «Accesibilidad».
 - **Inicio:** el foco de la lista activa, las metas activas con su progreso, los proyectos activos con su batería y su plazo, y estadísticas de las tareas (hechas por día, semana y mes, y canceladas en el mes; antes o después del plazo; velocidad en tareas y horas estimadas por semana; tiempo medio hasta completarlas; racha; pendientes, vencidas y bloqueadas; reparto por área, con los nombres de la cuenta), con recomendaciones según esos datos (también si un proyecto va fuera de plazo).
-- **Agenda:** vista semanal (de lunes a domingo) y por días (14 días, también los vacíos) con las tareas con fecha de las dos listas, los intervalos, las repeticiones previstas de las tareas que se repiten en fechas fijas y las reuniones. En la vista por días las tareas vencidas aparecen aparte; al pulsar una tarea se edita.
+- **Agenda:** vista semanal (de lunes a domingo) y por días (14 días, también los vacíos) con las tareas con fecha de las dos listas, los intervalos y las repeticiones previstas de las tareas que se repiten en fechas fijas. En la vista por días las tareas vencidas aparecen aparte; al pulsar una tarea se edita.
 - **Contacto:** «Escríbenos» (en la Ayuda, en «Tu cuenta» y en la pantalla de acceso) envía ideas, fallos o dudas; la administración los lee y los responde por email desde la app.
 - **Textos legales:** política de privacidad (`/privacidad`), condiciones de uso (`/condiciones`) y aviso legal (`/aviso-legal`), públicos y sin iniciar sesión (`src/Root.tsx` elige la página por la ruta, sin cargar Firebase). Están enlazados desde las pantallas de inicio de sesión y de acceso, el pie, el menú de la cuenta y la Ayuda; al entrar se acepta tener al menos 14 años (o la edad mínima del país de residencia, si es mayor) y las condiciones. El contenido está en `src/components/LegalTexts.tsx`, y el titular (nombre completo y domicilio a efectos de notificaciones), el email de contacto y la fecha de la versión, en `src/services/legal.ts`: al cambiar el contenido, cambia también la fecha. Una prueba unitaria falla si falta el titular, su domicilio o el email.
 
@@ -252,6 +250,12 @@ La lista completa y numerada de lo que hace la app, con sus requisitos no funcio
 - **Cabeceras:** `X-Frame-Options: SAMEORIGIN` y `frame-ancestors 'self'` (la app no se puede incrustar en otras webs).
 - **Arreglos:** un área renombrada no se toma por una de partida; elegir el idioma que ya se ve no lo cambia en la cuenta; la política de privacidad describe los registros técnicos (30 días).
 
+### «Tiempo protegido», a la Ayuda (1.3.0)
+
+- **Sección retirada:** sin la pestaña `bermudas` ni `BermudasShield`, `MeetingModal`, `EmailModal` y `src/services/email.ts`. Inicio ya no cuenta las reuniones y la Agenda no las muestra; la bienvenida y la página de entrada ya no presentan la sección.
+- **Recomendaciones en la Ayuda:** «Recomendaciones para proteger tu tiempo» / “Tips to protect your time” (`HowItWorks`), solo consejos, sin botones ni referencias a pantallas (ver [Proteger el tiempo](#6-proteger-el-tiempo-el-triángulo-de-las-bermudas)).
+- **Los datos se conservan:** `users/{uid}/meetings` y `users/{uid}/emails` ya no se siguen en vivo (`LIVE_COLLECTIONS`, que también decide el indicador de sincronización), pero siguen en `USER_COLLECTIONS`: van en «Descargar mis datos», la importación los trae y se borran con la cuenta. Las reglas los siguen admitiendo para la importación. La política de privacidad lo explica (versión del 1 de noviembre de 2026).
+
 ---
 
 ## 🛠️ Stack Tecnológico
@@ -279,8 +283,8 @@ La lista completa y numerada de lo que hace la app, con sus requisitos no funcio
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/OvidiuMM/neuroproductivity-platform.git
-cd neuroproductivity-platform
+git clone https://github.com/Moldovan-Tech/clar-platform.git
+cd clar-platform
 
 # 2. Instalar dependencias (frontend y Cloud Functions)
 npm ci
@@ -430,7 +434,7 @@ Configuración inicial, una sola vez, con una cuenta propietaria del proyecto:
 PROJECT_ID=<project-id>
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
 SA="github-deployer@$PROJECT_ID.iam.gserviceaccount.com"
-REPO_ID=1408574835  # gh api repos/OvidiuMM/neuroproductivity-platform -q .id
+REPO_ID=1408574835  # gh api repos/Moldovan-Tech/clar-platform -q .id
 
 # 1. Cuenta de servicio con los permisos para desplegar Hosting, Functions y las reglas de Firestore
 #    (secretmanager.viewer: el CLI comprueba el secreto SMTP_PASSWORD al desplegar)
@@ -563,9 +567,8 @@ El repositorio utiliza `package-lock.json` (en la raíz, en `functions/` y en `t
 │   │   ├── taskListing.ts       # Orden, filtros y estimación del Top 10
 │   │   ├── recurrence.ts        # Tareas recurrentes y su exportación RRULE
 │   │   ├── alarms.ts · notifications.ts # Cuándo suena cada alarma; notificaciones del sistema (con public/sw.js)
-│   │   ├── agenda.ts            # Agenda por días: plazos, intervalos, repeticiones y reuniones
+│   │   ├── agenda.ts            # Agenda por días: plazos, intervalos y repeticiones
 │   │   ├── calendar.ts          # Enlaces de Google y Outlook y archivos .ics (con la alarma)
-│   │   ├── email.ts             # Correos: destinatarios, adjuntos, borradores y enlace mailto
 │   │   ├── dateInput.ts · timeInput.ts # Fechas dd/mm/aaaa (semanas de lunes a domingo) y horas en 24 h
 │   │   ├── stats.ts             # Estadísticas y recomendaciones de la pantalla de Inicio
 │   │   ├── onboarding.ts        # Bienvenida vista, por cuenta
@@ -591,7 +594,6 @@ El repositorio utiliza `package-lock.json` (en la raíz, en `functions/` y en `t
 │       ├── DateField.tsx · TimeField.tsx · TaskDates.tsx · TaskStatusSelect.tsx · ArchivedTasksModal.tsx
 │       ├── AlarmAlerts.tsx · NotificationPermission.tsx # Avisos de alarma y permiso de notificaciones
 │       ├── AgendaView.tsx       # Agenda semanal y por días
-│       ├── BermudasShield.tsx · MeetingModal.tsx · EmailModal.tsx # Tiempo protegido: reuniones y correos
 │       ├── LoginScreen.tsx · EmailAuthForm.tsx · EmailVerificationScreen.tsx # Inicio de sesión (Google o email)
 │       ├── AccessRequestScreen.tsx # Solicitud de acceso, su estado y los datos de la cuenta
 │       ├── AdminView.tsx · AccessAdminView.tsx · FeedbackAdminView.tsx # Administración: solicitudes y mensajes
@@ -631,7 +633,7 @@ El repositorio utiliza `package-lock.json` (en la raíz, en `functions/` y en `t
 | `users/{uid}/tasks`                                                    | Tareas: lista, estado, prioridad, fechas, alarma, repetición, meta, proyecto, dependencia y notas                                                                                                                               | La app           |
 | `users/{uid}/wheelLogs`                                                | Evaluaciones de la Rueda: una puntuación de 0 a 10 por área (solo se añaden)                                                                                                                                                    | La app           |
 | `users/{uid}/goals` · `users/{uid}/projects`                           | Metas (área, para qué, fecha objetivo) y proyectos (meta, fecha de fin)                                                                                                                                                         | La app           |
-| `users/{uid}/meetings` · `users/{uid}/emails`                          | Reuniones y correos de «Tiempo protegido»                                                                                                                                                                                       | La app           |
+| `users/{uid}/meetings` · `users/{uid}/emails`                          | Reuniones y correos de «Tiempo protegido» (retirado en la 1.3.0): los guardados antes, sin pantalla; van en la descarga y se borran con la cuenta                                                                               | La importación   |
 | `access/{uid}` · `admins/{uid}` · `settings/access` · `blocked_emails` | Solicitudes y estado del acceso, marca de administración, modo de aprobación y emails bloqueados                                                                                                                                | Cloud Functions  |
 | `calendar_tokens/{uid}` · `calendar_status/{uid}`                      | Conexión con Google Calendar: el permiso de Google cifrado, el calendario y la zona horaria; y el estado que ve la cuenta (`calendar_status`, solo lo lee ella)                                                                 | Cloud Functions  |
 | `features/{uid}`                                                       | Funciones extra que la administración ha activado a la cuenta (`granted`)                                                                                                                                                       | Cloud Functions  |

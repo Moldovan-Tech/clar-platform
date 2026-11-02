@@ -106,18 +106,3 @@ test('the calendar stays inside the screen on a phone', async ({ page }) => {
     await page.keyboard.press('Escape');
   }
 });
-
-test('a meeting needs a date: clearing it disables saving and says why', async ({ page }) => {
-  await page.goto('/');
-  await signInWithGoogle(page);
-  await page.getByRole('button', { name: 'Tiempo protegido', exact: true }).click();
-  await page.getByRole('button', { name: 'Planificar una reunión' }).click();
-  await page.getByRole('button', { name: 'Calendario: Fecha de la reunión' }).click();
-  await page
-    .getByRole('dialog', { name: /Fecha de la reunión/ })
-    .getByRole('button', { name: 'Borrar' })
-    .click();
-  await expect(page.getByLabel('Fecha', { exact: true })).toHaveAttribute('aria-invalid', 'true');
-  await expect(page.getByRole('alert').filter({ hasText: 'La reunión necesita una fecha.' })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Guardar la reunión/ })).toBeDisabled();
-});

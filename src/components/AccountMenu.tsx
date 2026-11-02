@@ -30,6 +30,14 @@ import { messages } from '../i18n/locale';
 
 const m = messages(
   {
+    retired: (n: number) =>
+      `Eliminar ${n === 1 ? 'la reunión o el correo' : `las ${n} reuniones y correos`} de versiones anteriores`,
+    retiredHelp:
+      '«Tiempo protegido» ya no está en la app: lo que guardaste allí sigue en tu cuenta y en tu descarga hasta que lo elimines.',
+    retiredConfirm: 'Se borrarán para siempre. Si los quieres conservar, descarga antes tus datos.',
+    retiredDelete: 'Eliminar',
+    retiredCancel: 'Cancelar',
+    retiredDone: 'Eliminados.',
     language: 'Idioma',
     failed: 'No se pudo completar la acción.',
     shortPassword: `La contraseña nueva debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
@@ -83,6 +91,13 @@ const m = messages(
     deleteAccount: 'Eliminar mi cuenta y todos mis datos'
   },
   {
+    retired: (n) => `Delete ${n === 1 ? 'the meeting or email' : `the ${n} meetings and emails`} from earlier versions`,
+    retiredHelp:
+      '“Protected time” is no longer in the app: what you saved there stays in your account and your download until you delete it.',
+    retiredConfirm: "They'll be deleted for good. If you want to keep them, download your data first.",
+    retiredDelete: 'Delete',
+    retiredCancel: 'Cancel',
+    retiredDone: 'Deleted.',
     language: 'Language',
     failed: "Couldn't complete the action.",
     shortPassword: `Your new password must be at least ${MIN_PASSWORD_LENGTH} characters long.`,
@@ -148,6 +163,9 @@ interface AccountMenuProps {
   onExportData: () => Promise<void>;
   // Lee y comprueba el archivo elegido; si vale, se abre la vista previa (y este menú se cierra)
   onImportData: (file: File) => Promise<void>;
+  // Reuniones y correos de versiones anteriores (1.3.0 retiró «Tiempo protegido»): cuántos hay (null: aún no se sabe)
+  // y borrarlos
+  retired: { count: number | null; onDelete: () => Promise<void> };
   // Alarmas con CLAR cerrada en este dispositivo (notificaciones push); null si esta instalación no las ofrece
   push: {
     enabled: boolean;
@@ -178,7 +196,7 @@ interface AccountMenuProps {
   returnFocusTo?: () => HTMLElement | null;
 }
 
-type Busy = 'export' | 'import' | 'push' | 'push-test' | 'delete' | 'password' | 'everywhere' | null;
+type Busy = 'export' | 'import' | 'retired' | 'push' | 'push-test' | 'delete' | 'password' | 'everywhere' | null;
 type Panel = 'password' | 'everywhere' | 'delete' | null;
 
 const actionClass =
@@ -196,6 +214,7 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
   onSignOut,
   onExportData,
   onImportData,
+  retired,
   push,
   extraFeatures,
   calendar,
@@ -215,6 +234,7 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const importInput = useRef<HTMLInputElement>(null);
+  const [confirmRetired, setConfirmRetired] = useState(false);
   const deleteButtonRef = useRef<HTMLButtonElement>(null);
   useModalFocus(isOpen, dialogRef, onClose, returnFocusTo);
 
@@ -388,6 +408,46 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
                 if (file) void run('import', () => onImportData(file));
               }}
             />
+            {retired.count !== null && retired.count > 0 && (
+              <div className="space-y-1.5 rounded-xl border border-slate-200 px-4 py-2.5">
+                <p className="text-[11px] text-slate-600">{m.retiredHelp}</p>
+                {confirmRetired ? (
+                  <div role="alert" className="space-y-2 rounded-lg bg-red-50 p-2.5 text-[11px] text-red-900">
+                    <p>{m.retiredConfirm}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={busy !== null}
+                        onClick={() => {
+                          setConfirmRetired(false);
+                          void run('retired', retired.onDelete, m.retiredDone);
+                        }}
+                        className="min-h-9 rounded-lg bg-red-600 px-3 text-xs font-bold text-white hover:bg-red-700"
+                      >
+                        {m.retiredDelete}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmRetired(false)}
+                        className="min-h-9 rounded-lg px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                      >
+                        {m.retiredCancel}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={busy !== null}
+                    onClick={() => setConfirmRetired(true)}
+                    className={actionClass}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-600" aria-hidden="true" />
+                    {m.retired(retired.count)}
+                  </button>
+                )}
+              </div>
+            )}
             <div className="rounded-xl border border-slate-200 px-4 py-2.5">
               <p className="text-xs font-bold text-slate-700">{m.alarmNotifications}</p>
               {/* Con push, la casilla de abajo pide también el permiso: el botón solo haría falta sin ella */}

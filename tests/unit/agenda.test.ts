@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { buildAgenda, daysFrom, overdueTasks, startOfWeek } from '../../src/services/agenda.ts';
-import type { MeetingGuard, TaskItem } from '../../src/types';
+import type { TaskItem } from '../../src/types';
 
 const now = new Date(2026, 9, 14, 12, 0); // miércoles 14 oct 2026
 const week = daysFrom(startOfWeek(now), 7); // lunes 12 → domingo 18
@@ -49,7 +49,6 @@ describe('buildAgenda', () => {
         task('undated'),
         task('next-week', { dueDate: '2026-10-20' })
       ],
-      [],
       week,
       now
     );
@@ -60,7 +59,6 @@ describe('buildAgenda', () => {
   it('spreads intervals over their days with start, ongoing and due labels', () => {
     const agenda = buildAgenda(
       [task('trip', { startDate: '2026-10-11', dueDate: '2026-10-13', startTime: '08:00' })],
-      [],
       week,
       now
     );
@@ -80,7 +78,7 @@ describe('buildAgenda', () => {
       dueTime: '09:00',
       recurrence: { frequency: 'WEEKLY', interval: 1, weekdays: [1, 3, 5] }
     });
-    const agenda = buildAgenda([daily], [], week, now);
+    const agenda = buildAgenda([daily], week, now);
     assert.deepEqual(items(agenda, '2026-10-14'), ['standup']);
     assert.deepEqual(items(agenda, '2026-10-16'), ['standup:next:2026-10-16']);
     assert.deepEqual(items(agenda, '2026-10-12'), []); // antes de la fecha actual no se proyecta
@@ -93,7 +91,7 @@ describe('buildAgenda', () => {
       dueDate: '2026-10-14',
       recurrence: { frequency: 'WEEKLY', interval: 1, weekdays: [1, 3, 5] }
     });
-    const agenda = buildAgenda([repeated], [], week, now);
+    const agenda = buildAgenda([repeated], week, now);
     assert.deepEqual(
       week.map((d) => items(agenda, d).length),
       [0, 0, 1, 0, 1, 0, 0]
@@ -105,7 +103,7 @@ describe('buildAgenda', () => {
     const reactivated = task('week-1', { dueDate: '2026-10-05', recurrence: rule, nextOccurrenceId: 'week-2' });
     const tail = task('week-2', { dueDate: '2026-10-12', recurrence: rule });
     const nextWeek = daysFrom(new Date(2026, 9, 19), 7);
-    const agenda = buildAgenda([reactivated, tail], [], nextWeek, now);
+    const agenda = buildAgenda([reactivated, tail], nextWeek, now);
     assert.deepEqual(items(agenda, '2026-10-19'), ['week-2:next:2026-10-19']);
   });
 
@@ -114,7 +112,7 @@ describe('buildAgenda', () => {
       dueDate: '2026-10-13',
       recurrence: { frequency: 'DAILY', interval: 2, from: 'COMPLETION' }
     });
-    const agenda = buildAgenda([plants], [], week, now);
+    const agenda = buildAgenda([plants], week, now);
     assert.deepEqual(
       week.map((d) => items(agenda, d)),
       [[], ['plants'], [], [], [], [], []]
@@ -124,7 +122,7 @@ describe('buildAgenda', () => {
   it('shows the visible part of intervals of any length', () => {
     // Más de 400 días: el día de vencimiento sigue apareciendo
     const long = task('mortgage', { startDate: '2025-01-01', dueDate: '2026-10-16' });
-    const agenda = buildAgenda([long], [], week, now);
+    const agenda = buildAgenda([long], week, now);
     assert.deepEqual(items(agenda, '2026-10-12'), ['mortgage:2026-10-12']);
     assert.equal((agenda.get('2026-10-16')![0] as { label: string }).label, 'Vence');
     assert.deepEqual(items(agenda, '2026-10-17'), []);
@@ -133,31 +131,14 @@ describe('buildAgenda', () => {
   it('projects repetitions however far the visible range is from the original date', () => {
     // Tarea diaria vencida hace casi un año: sus repeticiones siguen apareciendo en la semana actual
     const daily = task('water', { dueDate: '2025-11-01', recurrence: { frequency: 'DAILY', interval: 1 } });
-    const agenda = buildAgenda([daily], [], week, now);
+    const agenda = buildAgenda([daily], week, now);
     assert.deepEqual(
       week.map((d) => items(agenda, d).length),
       [1, 1, 1, 1, 1, 1, 1]
     );
     // Y también varios años hacia delante
     const future = daysFrom(new Date(2029, 0, 1), 3);
-    assert.deepEqual(items(buildAgenda([daily], [], future, now), '2029-01-02'), ['water:next:2029-01-02']);
-  });
-
-  it('includes meetings with their local time range', () => {
-    const start = new Date(2026, 9, 13, 13, 0);
-    const meeting: MeetingGuard = {
-      id: 'meet-1',
-      userId: 'uid',
-      title: 'Revisión semanal',
-      startTime: start.toISOString(),
-      endTime: new Date(2026, 9, 13, 13, 45).toISOString(),
-      agendaPoints: ['1. Estado'],
-      moderatorName: 'Ana',
-      moderatorEmail: 'ana@example.com',
-      createdAt: '2026-10-01T09:00:00.000Z'
-    };
-    const [item] = buildAgenda([], [meeting], week, now).get('2026-10-13')!;
-    assert.deepEqual([item.kind, item.time, item.endTime], ['meeting', '13:00', '13:45']);
+    assert.deepEqual(items(buildAgenda([daily], future, now), '2029-01-02'), ['water:next:2029-01-02']);
   });
 });
 

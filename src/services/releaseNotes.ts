@@ -24,6 +24,32 @@ const released = (year: number, month: number) => monthFormat.format(Date.UTC(ye
 
 export const RELEASE_NOTES: readonly ReleaseNote[] = [
   {
+    version: '1.3.0',
+    month: released(2026, 11),
+    changes: [
+      messages(
+        {
+          title: '«Tiempo protegido» pasa a la Ayuda',
+          text: 'La sección «Tiempo protegido» se convierte en «Recomendaciones para proteger tu tiempo», en la Ayuda: mañanas sin reuniones, reuniones con hora de fin y orden del día, y el correo y los mensajes a horas fijas. Las reuniones ya no salen en Inicio ni en la Agenda.'
+        },
+        {
+          title: '“Protected time” moves to Help',
+          text: '“Protected time” becomes “Tips to protect your time”, in Help: meeting-free mornings, meetings with an end time and an agenda, and email and messages at set times. Meetings no longer show on Home or in the Agenda.'
+        }
+      ),
+      messages(
+        {
+          title: 'Reuniones y correos guardados',
+          text: 'Si guardaste reuniones o correos (también borradores), siguen en tu cuenta y en «Descargar mis datos». Puedes eliminarlos desde el menú de tu cuenta.'
+        },
+        {
+          title: 'Saved meetings and emails',
+          text: 'If you saved meetings or emails (drafts too), they are still in your account and in “Download my data”. You can delete them from your account menu.'
+        }
+      )
+    ]
+  },
+  {
     version: '1.2.1',
     month: released(2026, 10),
     changes: [

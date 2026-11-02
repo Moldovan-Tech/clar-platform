@@ -42,7 +42,7 @@ const m = messages(
   {
     title: 'Ayuda',
     intro:
-      'CLAR va de lo que te importa a lo que haces hoy: decides qué áreas de tu vida quieres mejorar (Rueda), les pones metas, conviertes cada meta en acciones concretas (tareas; si quieres, agrupas las relacionadas en proyectos con fecha de fin), eliges qué toca hoy (Top 10 y Agenda) y proteges el tiempo para hacerlas. En el móvil, la barra inferior lleva Inicio, Listas, Agenda y Metas; la Rueda, Proyectos, Tiempo protegido y la Ayuda están en «Más».',
+      'CLAR va de lo que te importa a lo que haces hoy: decides qué áreas de tu vida quieres mejorar (Rueda), les pones metas, conviertes cada meta en acciones concretas (tareas; si quieres, agrupas las relacionadas en proyectos con fecha de fin), eliges qué toca hoy (Top 10 y Agenda) y proteges el tiempo para hacerlas. En el móvil, la barra inferior lleva Inicio, Listas, Agenda y Metas; la Rueda, Proyectos y la Ayuda están en «Más».',
     quickGuide: 'Guía rápida',
     quickGuideText:
       'Un recorrido de un minuto por lo esencial, la introducción al método, o escríbenos con una idea o un fallo: te responderemos por email.',
@@ -54,13 +54,16 @@ const m = messages(
       { title: 'Evalúa tu Rueda de la Vida', text: 'Es tu punto de partida y muestra qué áreas necesitan atención.' },
       { title: 'Ponle una meta a un área', text: 'En «Metas», empieza por las áreas más bajas.' },
       { title: 'Añade tareas a tus metas', text: 'Con «Añadir tarea» en cada meta: acciones físicas concretas.' },
-      { title: 'Protege tu tiempo', text: 'Mañanas sin reuniones y correos escritos en orden, con borradores.' }
+      {
+        title: 'Protege tu tiempo',
+        text: 'Mañanas sin reuniones y el correo a horas fijas: más abajo, las recomendaciones.'
+      }
     ],
     screens: {
       home: {
         title: 'Inicio',
         points: [
-          'El foco de la lista activa (Profesional o Personal) y sus indicadores: Top 10, Rueda de la Vida y reuniones.',
+          'El foco de la lista activa (Profesional o Personal) y sus indicadores: Top 10 y Rueda de la Vida.',
           'Tus estadísticas: tareas hechas por día, semana y mes (y las canceladas, que no cuentan como hechas), cuántas terminas antes o después del plazo, tu velocidad, tu racha y tus pendientes, con las vencidas y las bloqueadas.',
           'Tus metas activas con su progreso, y tus proyectos activos con su batería y su plazo.',
           'Recomendaciones según tus datos, por ejemplo empezar por la tarea vencida más antigua.'
@@ -123,7 +126,7 @@ const m = messages(
           push
             ? 'La alarma avisa mientras CLAR esté abierta: dentro de la app y, si lo permites, con una notificación del sistema. Con «Avisarme también con CLAR cerrada», en el menú de tu cuenta, te llega aunque CLAR esté cerrada o el móvil bloqueado, y «Probar notificación» comprueba que llega. Al tocar la notificación se abre la tarea. En el iPhone solo funciona desde CLAR en la pantalla de inicio, con iOS 16.4 o posterior: en Safari, Compartir › «Añadir a pantalla de inicio»; después abre CLAR desde el icono y vuelve a entrar. En Android, para que salga en lo alto de la pantalla, activa «Mostrar en pantalla emergente» en los ajustes de notificaciones de CLAR. Si no llegó y abres CLAR después de su hora pero antes del plazo, avisa al momento y dice a qué hora era. El archivo .ics del calendario también la lleva.'
             : 'La alarma avisa mientras CLAR esté abierta, también en segundo plano: dentro de la app y, si lo permites (en el formulario o en el menú de tu cuenta), con una notificación del sistema (en el iPhone, solo si instalas CLAR en la pantalla de inicio). Con CLAR cerrada o el móvil bloqueado no puede sonar: si abres CLAR después de su hora pero antes del plazo, avisa al momento y dice a qué hora era. Para no perderla, añade la tarea al calendario con el archivo .ics, que lleva la alarma.',
-          'Las horas (límite, de inicio, de la alarma y de las reuniones) se escriben en 24 h, de 00:00 a 23:59: 9:30, 0930 o 21:45. Lo que no es una hora no se guarda.',
+          'Las horas (límite, de inicio y de la alarma) se escriben en 24 h, de 00:00 a 23:59: 9:30, 0930 o 21:45. Lo que no es una hora no se guarda.',
           'Las tareas pueden repetirse cada N días, semanas, meses o años (por ejemplo, «cada 3 días» o «cada mes, el 2.º lunes»): en «Más opciones», «Repetir». En días y semanas, la siguiente puede ir en fechas fijas o contar desde que la haces: con «3 días después de hacerla», vence 3 días después del día en que la marques Hecha. Al repetir, «Inicio» es desde cuándo se repite y la fecha límite hasta cuándo; cada repetición vence su propio día. Al marcarla Hecha o Cancelada se archiva y se crea la siguiente.',
           'Las ideas sin urgencia van a «Algún día» y no compiten con el Top 10.'
         ]
@@ -131,20 +134,21 @@ const m = messages(
       agenda: {
         title: 'Agenda',
         points: [
-          'Vista semanal (de lunes a domingo) y por días con las tareas con fecha de tus dos listas, los intervalos, las próximas repeticiones de las tareas que se repiten en fechas fijas y las reuniones.',
+          'Vista semanal (de lunes a domingo) y por días con las tareas con fecha de tus dos listas, los intervalos y las próximas repeticiones de las tareas que se repiten en fechas fijas.',
           'En la vista por días, las tareas vencidas aparecen aparte. Pulsa una tarea para editarla.'
         ]
-      },
-      bermudas: {
-        title: 'Tiempo protegido',
-        points: [
-          'El «triángulo de las Bermudas» del tiempo son sus tres grandes fugas: reuniones, correo y mensajes. Aquí tienes herramientas para las dos primeras.',
-          'Reuniones: no se pueden programar antes de las 12:00 h y exigen hora de fin, orden del día y un moderador.',
-          'Correo: primero adjuntos y cuerpo del mensaje; los destinatarios se desbloquean al final. De los adjuntos, CLAR apunta solo el nombre y el tamaño: los archivos no salen de tu equipo.',
-          'Lo que no termines queda en «Borradores»: al cerrar se guarda solo, y con «Continuar» sigues donde lo dejaste. Los correos guardados también se pueden abrir y editar.',
-          'CLAR no envía el correo: «Abrir en mi correo» lo pasa a tu programa de correo con los destinatarios, el asunto y el texto; los adjuntos los añades allí.'
-        ]
       }
+    },
+    // Consejos sin pantalla propia: no remiten a nada de la app
+    tips: {
+      title: 'Recomendaciones para proteger tu tiempo',
+      points: [
+        'El «triángulo de las Bermudas» del tiempo son sus tres grandes fugas: las reuniones, el correo y los mensajes. Si las contienes, te queda tiempo para lo importante.',
+        'Deja las mañanas libres de reuniones para el trabajo que pide concentración (por ejemplo, ninguna antes de las 12:00) y lleva las reuniones a primera hora de la tarde.',
+        'Ponle a cada reunión hora de fin, un orden del día cerrado y alguien que la modere.',
+        'Al escribir un correo, empieza por el contenido y los adjuntos, y elige los destinatarios al final: así no sale antes de estar listo.',
+        'Atiende el correo y los mensajes en bloques, a horas fijas (por ejemplo, a media mañana y al final de la tarde), en lugar de responder a cada uno en cuanto llega.'
+      ]
     },
     goTo: (title: string) => `Ir a ${title}`,
     relations: 'Cómo se relacionan',
@@ -162,8 +166,8 @@ const m = messages(
         text: 'las más importantes forman tu Top 10 y las que tienen fecha, tu Agenda; una alarma te avisa antes del plazo.'
       },
       {
-        label: 'Top 10 → Tiempo protegido:',
-        text: 'las mañanas sin reuniones son el tiempo para trabajar tu Top 10.'
+        label: 'Top 10 → Tu tiempo:',
+        text: 'reserva las mañanas sin reuniones para trabajar tu Top 10.'
       },
       {
         label: 'Vuelta a la Rueda:',
@@ -172,7 +176,7 @@ const m = messages(
     ],
     data: 'Tus datos',
     dataText:
-      'Todo se guarda en tu cuenta de CLAR, en servidores de Google Cloud en la Unión Europea (Bélgica), y solo tú puedes acceder: tus tareas (y sus borradores), metas, proyectos, evaluaciones, reuniones y correos (de los adjuntos, solo el nombre y el tamaño). Si la administración tiene activada la aprobación de cuentas, revisa cada una antes de su primer uso; para ello ve tu nombre, tu email, tu foto de perfil (si entras con Google) y el mensaje de la solicitud, nunca tus datos. Los mensajes de «Escríbenos» se guardan con tu nombre y tu email para responderte por email. Se sincroniza entre tus dispositivos y la app sigue funcionando sin conexión: los cambios se envían al recuperarla. El indicador de la cabecera está verde cuando todo está guardado en el servidor y naranja cuando hay cambios pendientes o no hay conexión; púlsalo para forzar la sincronización. Desde el menú de tu cuenta puedes descargar tus datos e importar una descarga anterior (se añade lo que falta; lo que ya tienes no se toca), cambiar la contraseña (si entras con email), cerrar la sesión en todos tus dispositivos o eliminar la cuenta con todo su contenido. Si activas «Avisarme también con CLAR cerrada» en un dispositivo, se guardan además su identificador de notificaciones y su zona horaria, y tus alarmas pendientes con el nombre de la tarea; la notificación pasa por Firebase Cloud Messaging y solo lleva el nombre si lo pides.',
+      'Todo se guarda en tu cuenta de CLAR, en servidores de Google Cloud en la Unión Europea (Bélgica), y solo tú puedes acceder: tus tareas (y sus borradores), metas, proyectos y evaluaciones, y, si guardaste reuniones o correos con versiones anteriores (de los adjuntos, solo el nombre y el tamaño), siguen en la descarga de tus datos hasta que los elimines desde el menú de tu cuenta. Si la administración tiene activada la aprobación de cuentas, revisa cada una antes de su primer uso; para ello ve tu nombre, tu email, tu foto de perfil (si entras con Google) y el mensaje de la solicitud, nunca tus datos. Los mensajes de «Escríbenos» se guardan con tu nombre y tu email para responderte por email. Se sincroniza entre tus dispositivos y la app sigue funcionando sin conexión: los cambios se envían al recuperarla. El indicador de la cabecera está verde cuando todo está guardado en el servidor y naranja cuando hay cambios pendientes o no hay conexión; púlsalo para forzar la sincronización. Desde el menú de tu cuenta puedes descargar tus datos e importar una descarga anterior (se añade lo que falta; lo que ya tienes no se toca), cambiar la contraseña (si entras con email), cerrar la sesión en todos tus dispositivos o eliminar la cuenta con todo su contenido. Si activas «Avisarme también con CLAR cerrada» en un dispositivo, se guardan además su identificador de notificaciones y su zona horaria, y tus alarmas pendientes con el nombre de la tarea; la notificación pasa por Firebase Cloud Messaging y solo lleva el nombre si lo pides.',
     dataCalendar:
       ' Con Google Calendar conectado, los datos de tus tareas con fecha se envían a un calendario «CLAR» de tu cuenta de Google.',
     dataDetails: 'Todo el detalle, en la',
@@ -200,7 +204,7 @@ const m = messages(
   {
     title: 'Help',
     intro:
-      'CLAR takes you from what matters to you to what you do today: you decide which areas of your life you want to improve (Wheel), set goals for them, turn each goal into concrete actions (tasks; if you like, you group related ones into projects with an end date), choose what to do today (Top 10 and Agenda) and protect the time to do them. On mobile, the bottom bar has Home, Lists, Agenda and Goals; the Wheel, Projects, Protected time and Help are under “More”.',
+      'CLAR takes you from what matters to you to what you do today: you decide which areas of your life you want to improve (Wheel), set goals for them, turn each goal into concrete actions (tasks; if you like, you group related ones into projects with an end date), choose what to do today (Top 10 and Agenda) and protect the time to do them. On mobile, the bottom bar has Home, Lists, Agenda and Goals; the Wheel, Projects and Help are under “More”.',
     quickGuide: 'Quick guide',
     quickGuideText:
       "A one-minute tour of the essentials, the introduction to the method, or contact us with an idea or a bug: we'll reply by email.",
@@ -212,13 +216,13 @@ const m = messages(
       { title: 'Assess your Wheel of Life', text: "It's your starting point and shows which areas need attention." },
       { title: 'Set a goal for an area', text: 'In “Goals”, start with the lowest areas.' },
       { title: 'Add tasks to your goals', text: 'With “Add task” on each goal: concrete physical actions.' },
-      { title: 'Protect your time', text: 'Mornings without meetings, and emails written in order, with drafts.' }
+      { title: 'Protect your time', text: 'Meeting-free mornings and email at set times: the tips are further down.' }
     ],
     screens: {
       home: {
         title: 'Home',
         points: [
-          'The focus of the active list (Work or Personal) and its indicators: Top 10, Wheel of Life and meetings.',
+          'The focus of the active list (Work or Personal) and its indicators: Top 10 and Wheel of Life.',
           "Your stats: tasks done per day, week and month (and canceled ones, which don't count as done), how many you finish before or after the deadline, your pace, your streak and your pending tasks, with the overdue and blocked ones.",
           'Your active goals with their progress, and your active projects with their battery and deadline.',
           'Recommendations based on your data, for example starting with the oldest overdue task.'
@@ -281,7 +285,7 @@ const m = messages(
           push
             ? "The alarm notifies you while CLAR is open: inside the app and, if you allow it, with a system notification. With “Also notify me when CLAR is closed”, in your account menu, it reaches you even when CLAR is closed or your phone is locked, and “Test notification” checks that it arrives. Tapping the notification opens the task. On iPhone it only works from CLAR on the Home Screen, with iOS 16.4 or later: in Safari, Share › “Add to Home Screen”; then open CLAR from the icon and sign in again. On Android, to have it appear at the top of the screen, turn on “Pop on screen” in CLAR's notification settings. If it didn't arrive and you open CLAR after its time but before the deadline, it notifies you right away and says what time it was. The calendar's .ics file includes it too."
             : "The alarm notifies you while CLAR is open, also in the background: inside the app and, if you allow it (in the form or in your account menu), with a system notification (on iPhone, only if you install CLAR on the Home Screen). With CLAR closed or your phone locked it can't go off: if you open CLAR after its time but before the deadline, it notifies you right away and says what time it was. So you don't miss it, add the task to your calendar with the .ics file, which includes the alarm.",
-          "Times (due, start, alarm and meeting times) are written in 24-hour format, from 00:00 to 23:59: 9:30, 0930 or 21:45. Anything that isn't a time isn't saved.",
+          "Times (due, start and alarm times) are written in 24-hour format, from 00:00 to 23:59: 9:30, 0930 or 21:45. Anything that isn't a time isn't saved.",
           "Tasks can repeat every N days, weeks, months or years (for example, “every 3 days” or “every month, on the 2nd Monday”): in “More options”, “Repeat”. For days and weeks, the next one can fall on fixed dates or count from when you do it: with “3 days after you do it”, it's due 3 days after the day you mark it Done. When it repeats, the start date is when it starts repeating and the due date is when it stops; each repeat is due on its own day. When you mark it Done or Canceled, it's archived and the next one is created.",
           "Ideas with no urgency go to “Someday” and don't compete with the Top 10."
         ]
@@ -289,20 +293,20 @@ const m = messages(
       agenda: {
         title: 'Agenda',
         points: [
-          'Weekly view (Monday to Sunday) and daily view with the dated tasks from both your lists, date ranges, the next repeats of tasks that repeat on fixed dates, and meetings.',
+          'Weekly view (Monday to Sunday) and daily view with the dated tasks from both your lists, date ranges and the next repeats of tasks that repeat on fixed dates.',
           'In the daily view, overdue tasks appear separately. Press a task to edit it.'
         ]
-      },
-      bermudas: {
-        title: 'Protected time',
-        points: [
-          'The “Bermuda Triangle” of time is its three big leaks: meetings, email and messages. Here you have tools for the first two.',
-          "Meetings: they can't be scheduled before 12:00 and require an end time, an agenda and a moderator.",
-          'Email: attachments and message body first; the recipients unlock at the end. Of the attachments, CLAR only notes the name and size: the files never leave your computer.',
-          "What you don't finish stays in “Drafts”: it's saved on its own when you close, and with “Continue” you pick up where you left off. Saved emails can also be opened and edited.",
-          "CLAR doesn't send the email: “Open in my email” passes it to your email app with the recipients, subject and text; you add the attachments there."
-        ]
       }
+    },
+    tips: {
+      title: 'Tips to protect your time',
+      points: [
+        'The “Bermuda Triangle” of time is its three big leaks: meetings, email and messages. Keep them in check and you have time left for what matters.',
+        'Keep your mornings free of meetings for focused work (for example, none before 12:00) and schedule meetings in the early afternoon instead.',
+        'Give every meeting an end time, a set agenda and someone to moderate it.',
+        'When you write an email, start with the content and the attachments, and choose the recipients last: that way it never goes out before it’s ready.',
+        'Deal with email and messages in batches, at set times (for example, mid-morning and late afternoon), instead of answering each one as it arrives.'
+      ]
     },
     goTo: (title) => `Go to ${title}`,
     relations: 'How they connect',
@@ -320,8 +324,8 @@ const m = messages(
         text: 'the most important ones make up your Top 10 and the ones with a date, your Agenda; an alarm notifies you before the deadline.'
       },
       {
-        label: 'Top 10 → Protected time:',
-        text: 'mornings without meetings are the time to work on your Top 10.'
+        label: 'Top 10 → Your time:',
+        text: 'keep your mornings free of meetings to work on your Top 10.'
       },
       {
         label: 'Back to the Wheel:',
@@ -330,7 +334,7 @@ const m = messages(
     ],
     data: 'Your data',
     dataText:
-      "Everything is stored in your CLAR account, on Google Cloud servers in the European Union (Belgium), and only you can access it: your tasks (and their drafts), goals, projects, assessments, meetings and emails (of the attachments, only the name and size). If the administrator has account approval turned on, they review each account before its first use; to do so they see your name, your email, your profile photo (if you sign in with Google) and the request message, never your data. “Contact us” messages are stored with your name and email so we can reply by email. Everything syncs across your devices and the app keeps working offline: changes are sent when you're back online. The indicator in the header is green when everything is saved on the server and orange when there are pending changes or no connection; press it to force a sync. From your account menu you can download your data and import an earlier download (what's missing is added; what you already have isn't touched), change your password (if you sign in with email), sign out on all your devices or delete your account with all its content. If you turn on “Also notify me when CLAR is closed” on a device, its notification ID and time zone are also stored, along with your pending alarms with the task name; the notification goes through Firebase Cloud Messaging and only includes the name if you ask for it.",
+      "Everything is stored in your CLAR account, on Google Cloud servers in the European Union (Belgium), and only you can access it: your tasks (and their drafts), goals, projects and assessments, and, if you saved meetings or emails with earlier versions (of the attachments, only the name and size), they stay in the download of your data until you delete them from your account menu. If the administrator has account approval turned on, they review each account before its first use; to do so they see your name, your email, your profile photo (if you sign in with Google) and the request message, never your data. “Contact us” messages are stored with your name and email so we can reply by email. Everything syncs across your devices and the app keeps working offline: changes are sent when you're back online. The indicator in the header is green when everything is saved on the server and orange when there are pending changes or no connection; press it to force a sync. From your account menu you can download your data and import an earlier download (what's missing is added; what you already have isn't touched), change your password (if you sign in with email), sign out on all your devices or delete your account with all its content. If you turn on “Also notify me when CLAR is closed” on a device, its notification ID and time zone are also stored, along with your pending alarms with the task name; the notification goes through Firebase Cloud Messaging and only includes the name if you ask for it.",
     dataCalendar:
       ' With Google Calendar connected, the data of your tasks with a date is sent to a “CLAR” calendar in your Google account.',
     dataDetails: 'All the details are in the',
@@ -372,8 +376,7 @@ const screensFor = (
       title: screens.tasks.title,
       points: screens.tasks.points(options)
     },
-    { tab: 'agenda', icon: <CalendarDays className="h-5 w-5 text-indigo-600" />, ...screens.agenda },
-    { tab: 'bermudas', icon: <ShieldCheck className="h-5 w-5 text-indigo-600" />, ...screens.bermudas }
+    { tab: 'agenda', icon: <CalendarDays className="h-5 w-5 text-indigo-600" />, ...screens.agenda }
   ];
 };
 
@@ -470,6 +473,22 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({
           </section>
         ))}
       </div>
+
+      {/* RECOMENDACIONES PARA PROTEGER TU TIEMPO */}
+      <section
+        aria-labelledby="help-tips"
+        className="space-y-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-xs"
+      >
+        <h3 id="help-tips" className="flex items-center gap-2 text-sm font-bold text-slate-900">
+          <ShieldCheck className="h-5 w-5 text-indigo-600" aria-hidden="true" />
+          {m.tips.title}
+        </h3>
+        <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-slate-600">
+          {m.tips.points.map((point) => (
+            <li key={point}>{point}</li>
+          ))}
+        </ul>
+      </section>
 
       {/* RELACIONES ENTRE PANTALLAS */}
       <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">

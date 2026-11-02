@@ -39,9 +39,9 @@ export const MIN_AGE = 14;
 
 // Fecha de la versión vigente de los textos legales: cámbiala con cada cambio de contenido. Es también la versión de las
 // condiciones que acepta cada cuenta (se guarda tal cual, en español, sea cual sea el idioma de la app)
-export const LEGAL_UPDATED = '31 de octubre de 2026';
+export const LEGAL_UPDATED = '1 de noviembre de 2026';
 // La misma fecha, en el idioma de la app: cámbiala junto con LEGAL_UPDATED (una prueba unitaria lo comprueba)
-export const LEGAL_UPDATED_LABEL = messages<string>(LEGAL_UPDATED, '31 October 2026');
+export const LEGAL_UPDATED_LABEL = messages<string>(LEGAL_UPDATED, '1 November 2026');
 
 // Quién envía los emails de CLAR (encargado del tratamiento)
 export const EMAIL_PROVIDER = 'IONOS';

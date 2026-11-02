@@ -18,7 +18,7 @@ test('signed out, the start screen presents CLAR and leads to creating an accoun
   await expect(page.getByText(/funci[oó]n(es)? extra|Google Calendar/i)).toHaveCount(0);
   await expect(page.getByRole('link', { name: /el código en GitHub/ })).toHaveAttribute(
     'href',
-    'https://github.com/OvidiuMM/neuroproductivity-platform'
+    'https://github.com/Moldovan-Tech/clar-platform'
   );
 
   await page.getByRole('button', { name: 'Crear cuenta gratis' }).click();

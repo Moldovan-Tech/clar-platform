@@ -14,12 +14,15 @@ test('a new account sees the welcome once: why, the method and how to start', as
   await expect(dialog.getByRole('heading', { name: 'Así funciona' })).toBeFocused();
   await expect(
     dialog.getByRole('list', { name: 'De tus áreas de vida a lo que haces hoy' }).getByRole('listitem')
-  ).toHaveText([/Áreas de vida/, /Metas/, /Proyectos \(opcional\)/, /Tareas/, /Top 10 y Agenda/, /Tiempo protegido/]);
+  ).toHaveText([/Áreas de vida/, /Metas/, /Proyectos \(opcional\)/, /Tareas/, /Top 10 y Agenda/]);
   await dialog.getByRole('button', { name: 'Atrás' }).click();
   await expect(dialog.getByRole('heading', { name: 'Te damos la bienvenida a CLAR' })).toBeFocused();
   await dialog.getByRole('button', { name: 'Siguiente' }).click();
   await dialog.getByRole('button', { name: 'Siguiente' }).click();
   await expect(dialog.getByRole('heading', { name: 'Tu rutina en tres pasos' })).toBeFocused();
+  // «Tiempo protegido» ya no es una sección (1.3.0): el último paso remite a las recomendaciones de la Ayuda
+  await expect(dialog).toContainText('en la Ayuda tienes más recomendaciones');
+  await expect(dialog).not.toContainText('Tiempo protegido');
   await dialog.getByRole('button', { name: 'Empezar el recorrido' }).click();
 
   // Sigue el recorrido guiado; al salir de él, el primer paso es evaluar la Rueda

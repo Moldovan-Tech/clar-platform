@@ -28,3 +28,12 @@ test('every short name on the phone bar is contained in the full accessible name
     assert.ok(section.label.includes(section.short), section.label);
   }
 });
+
+// «Tiempo protegido» se retiró en la 1.3.0: sus recomendaciones están en la Ayuda
+test('the sections are the eight that remain, without «Tiempo protegido»', () => {
+  assert.deepEqual(
+    sectionsFor(true).map((s) => s.label),
+    ['Inicio', 'Listas', 'Agenda', 'Rueda de la Vida', 'Metas', 'Proyectos', 'Administración', 'Ayuda']
+  );
+  assert.ok(sectionsFor(true).every((s) => !/tiempo/i.test(`${s.label} ${s.short}`)));
+});

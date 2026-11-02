@@ -1,4 +1,4 @@
-// Validación de metas y proyectos, estados, tamaños de archivo y perfiles locales en inglés
+// Validación de metas y proyectos, estados y perfiles locales en inglés
 (globalThis as { __CLAR_LOCALE__?: string }).__CLAR_LOCALE__ = 'en';
 
 import assert from 'node:assert/strict';
@@ -6,7 +6,6 @@ import { test } from 'node:test';
 
 const { validateGoal, sortGoals } = await import('../../src/services/goals.ts');
 const { PROJECT_STATUS_LABEL, validateProject } = await import('../../src/services/projects.ts');
-const { formatFileSize } = await import('../../src/services/email.ts');
 const { ORPHAN_PROFILE_ID, getLocalProfiles } = await import('../../src/services/localData.ts');
 
 test('goal validation speaks English', () => {
@@ -47,11 +46,6 @@ test('project statuses and validation speak English', () => {
     validateProject({ title: 'Kitchen', goalId: 'g1', endDate: '2026-12-01', description: 'x'.repeat(281) }),
     'The description can’t be longer than 280 characters.'
   );
-});
-
-test('file sizes use the English decimal point', () => {
-  assert.equal(formatFileSize(1.25 * 1024 * 1024), '1.3 MB');
-  assert.equal(formatFileSize(12 * 1024), '12 KB');
 });
 
 test('local profiles without a name get English names', () => {

@@ -1,6 +1,6 @@
 export type ListContext = 'WORK' | 'PERSONAL';
 
-export type AppTab = 'home' | 'tasks' | 'agenda' | 'wheel' | 'goals' | 'projects' | 'bermudas' | 'help' | 'access';
+export type AppTab = 'home' | 'tasks' | 'agenda' | 'wheel' | 'goals' | 'projects' | 'help' | 'access';
 
 export type TaskPriority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -115,6 +115,8 @@ export interface WheelOfLifeLog {
   scores: Record<WheelCategory, number>; // 0 to 10
 }
 
+// Reuniones y correos de «Tiempo protegido», sección retirada en la 1.3.0: la app ya no los muestra ni los crea. Los
+// guardados siguen en la cuenta: van en la descarga, la importación los trae y se borran con la cuenta
 export interface MeetingGuard {
   id: string;
   userId: string;
@@ -127,7 +129,7 @@ export interface MeetingGuard {
   createdAt: string;
 }
 
-// Correo de «Tiempo protegido». CLAR no lo envía: lo guarda y lo pasa al programa de correo.
+// Correo de «Tiempo protegido» (ver MeetingGuard). CLAR no lo enviaba: lo guardaba y lo pasaba al programa de correo.
 export type EmailStatus = 'draft' | 'saved';
 
 export interface EmailDraft {

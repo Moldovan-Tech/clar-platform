@@ -105,6 +105,9 @@ service cloud.firestore {
             && (!('form' in data) || (data.form is map && data.form.keys().size() <= 60));
         }
 
+        // Reuniones y correos (meetings, emails): «Tiempo protegido» se retiró en la 1.3.0 y la app ya no los crea,
+        // pero los guardados siguen en la cuenta y la importación de una descarga los vuelve a escribir: se admiten
+        // igual que el resto
         allow read, delete: if isOwner(uid)
           && collection in ['tasks', 'wheelLogs', 'meetings', 'emails', 'goals', 'projects', 'taskDrafts'];
         allow create: if hasAccess(uid)
