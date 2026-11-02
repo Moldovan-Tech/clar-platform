@@ -5,7 +5,10 @@ import {
   createVerifiedAccount,
   EMULATOR_PROJECT,
   emulatorOobCode,
+  patchDocument,
+  readDocument,
   signInWithGoogle,
+  uidOf,
   uniqueEmail
 } from './helpers';
 
@@ -161,6 +164,11 @@ test('the account changes its password, closes every session and deletes itself 
   await signIn(page, email, 'otra-clave-333');
   await expect(page.getByRole('button', { name: 'Nueva tarea', exact: true })).toBeVisible();
 
+  // Una reunión y un correo guardados antes de la 1.3.0, sin pantalla en la app: se borran con la cuenta
+  const uid = await uidOf(email);
+  await patchDocument(`users/${uid}/meetings/meet-legacy`, { id: { stringValue: 'meet-legacy' } });
+  await patchDocument(`users/${uid}/emails/email-legacy`, { id: { stringValue: 'email-legacy' } });
+
   // Eliminar la cuenta pide la contraseña
   account = await openSecurity(page);
   await account.getByRole('button', { name: 'Eliminar mi cuenta y todos mis datos' }).click();
@@ -169,6 +177,8 @@ test('the account changes its password, closes every session and deletes itself 
   await expect(page.getByRole('button', { name: 'Continuar con Google' })).toBeVisible();
   await signIn(page, email, 'otra-clave-333');
   await expect(page.getByRole('alert')).toHaveText('Email o contraseña incorrectos.');
+  expect(await readDocument(`users/${uid}/meetings/meet-legacy`)).toBeNull();
+  expect(await readDocument(`users/${uid}/emails/email-legacy`)).toBeNull();
 });
 
 test('an account that also has a password is not asked for it to delete itself after signing in with Google', async ({

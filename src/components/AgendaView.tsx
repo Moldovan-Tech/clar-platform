@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, Repeat, Users } from 'lucide-react';
-import { MeetingGuard, TaskItem } from '../types';
+import { CalendarDays, ChevronLeft, ChevronRight, Repeat } from 'lucide-react';
+import { TaskItem } from '../types';
 import { AgendaItem, buildAgenda, daysFrom, overdueTasks, startOfWeek } from '../services/agenda';
 import { toDateString } from '../services/recurrence';
 import { DEADLINE_TITLE_CLASS, formatTaskDates, toLocalDate } from '../services/tasks';
@@ -14,15 +14,14 @@ const m = messages(
       Vence: 'Vence',
       Empieza: 'Empieza',
       'En curso': 'En curso',
-      'Repetición prevista': 'Repetición prevista',
-      Reunión: 'Reunión'
+      'Repetición prevista': 'Repetición prevista'
     } satisfies Record<AgendaItem['label'], string>,
     allDay: 'Todo el día',
     work: 'Profesional',
     personal: 'Personal',
     dueToday: '(vence hoy)',
     title: 'Agenda',
-    intro: 'Tareas con fecha de tus dos listas, repeticiones previstas y reuniones. Pulsa una tarea para editarla.',
+    intro: 'Tareas con fecha de tus dos listas y repeticiones previstas. Pulsa una tarea para editarla.',
     view: 'Vista de la agenda',
     week: 'Semana',
     byDay: 'Por días',
@@ -30,7 +29,6 @@ const m = messages(
     today: 'Hoy',
     nextWeek: 'Semana siguiente',
     legend: 'Leyenda',
-    meeting: 'Reunión',
     upcomingRepeat: 'Repetición prevista',
     nothingScheduled: 'Sin nada programado',
     overdue: (count: number) => `Vencidas (${count})`
@@ -40,15 +38,14 @@ const m = messages(
       Vence: 'Due',
       Empieza: 'Starts',
       'En curso': 'Ongoing',
-      'Repetición prevista': 'Upcoming repeat',
-      Reunión: 'Meeting'
+      'Repetición prevista': 'Upcoming repeat'
     },
     allDay: 'All day',
     work: 'Work',
     personal: 'Personal',
     dueToday: '(due today)',
     title: 'Agenda',
-    intro: 'Tasks with dates from both your lists, upcoming repeats and meetings. Tap a task to edit it.',
+    intro: 'Tasks with dates from both your lists and upcoming repeats. Tap a task to edit it.',
     view: 'Agenda view',
     week: 'Week',
     byDay: 'By day',
@@ -56,7 +53,6 @@ const m = messages(
     today: 'Today',
     nextWeek: 'Next week',
     legend: 'Legend',
-    meeting: 'Meeting',
     upcomingRepeat: 'Upcoming repeat',
     nothingScheduled: 'Nothing scheduled',
     overdue: (count) => `Overdue (${count})`
@@ -65,7 +61,6 @@ const m = messages(
 
 interface AgendaViewProps {
   tasks: TaskItem[];
-  meetings: MeetingGuard[];
   onEditTask: (task: TaskItem) => void;
 }
 
@@ -86,26 +81,13 @@ const titleClass = (item: AgendaItem) =>
   `${item.deadline === 'today' ? 'font-bold' : 'font-semibold'} ${DEADLINE_TITLE_CLASS[item.deadline] || 'text-slate-900'}`;
 
 const AgendaEntry: React.FC<{ item: AgendaItem; onEditTask: (task: TaskItem) => void }> = ({ item, onEditTask }) => {
-  const time = item.time ? `${item.time}${item.endTime ? `–${item.endTime}` : ''}` : m.allDay;
+  const time = item.time || m.allDay;
   const meta = [
     m.labels[item.label],
     item.context === 'WORK' ? m.work : item.context === 'PERSONAL' ? m.personal : undefined
   ]
     .filter(Boolean)
     .join(' · ');
-
-  if (item.kind === 'meeting') {
-    return (
-      <div className="space-y-0.5 rounded-lg border border-l-4 border-slate-200 border-l-amber-500 bg-amber-50/50 p-2 text-xs">
-        <span className="block font-mono text-[10px] text-slate-600">{time}</span>
-        <span className="flex items-center gap-1 font-semibold wrap-anywhere text-slate-900">
-          <Users className="h-3 w-3 shrink-0 text-amber-600" aria-hidden="true" />
-          {item.title}
-        </span>
-        <span className="block text-[10px] text-slate-500">{meta}</span>
-      </div>
-    );
-  }
 
   const isOccurrence = item.kind === 'occurrence';
   return (
@@ -129,8 +111,8 @@ const AgendaEntry: React.FC<{ item: AgendaItem; onEditTask: (task: TaskItem) => 
   );
 };
 
-// Agenda con las tareas con fecha de las dos listas, sus repeticiones previstas y las reuniones
-export const AgendaView: React.FC<AgendaViewProps> = ({ tasks, meetings, onEditTask }) => {
+// Agenda con las tareas con fecha de las dos listas y sus repeticiones previstas
+export const AgendaView: React.FC<AgendaViewProps> = ({ tasks, onEditTask }) => {
   const now = useNow();
   const [mode, setMode] = useState<AgendaMode>('week');
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
@@ -140,7 +122,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ tasks, meetings, onEditT
   const isCurrentWeek = toDateString(weekStart) === toDateString(startOfWeek(now));
   const daysStart = mode === 'days' && isCurrentWeek ? now : weekStart;
   const days = daysFrom(daysStart, mode === 'week' ? 7 : DAYS_VIEW_LENGTH);
-  const agenda = buildAgenda(tasks, meetings, days, now);
+  const agenda = buildAgenda(tasks, days, now);
   const overdue = overdueTasks(tasks, now);
   const rangeLabel = `${rangeFormat.format(toLocalDate(days[0]))} – ${rangeFormat.format(toLocalDate(days[days.length - 1]))}`;
 
@@ -223,10 +205,6 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ tasks, meetings, onEditT
         <li className="flex items-center gap-1.5">
           <span className="h-3 w-3 rounded-sm bg-emerald-500" aria-hidden="true" />
           {m.personal}
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-sm bg-amber-500" aria-hidden="true" />
-          {m.meeting}
         </li>
         <li className="flex items-center gap-1.5">
           <Repeat className="h-3 w-3" aria-hidden="true" />

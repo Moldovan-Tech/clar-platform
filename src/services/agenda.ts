@@ -1,4 +1,4 @@
-import { ListContext, MeetingGuard, TaskItem } from '../types';
+import { ListContext, TaskItem } from '../types';
 import { DeadlineState, getDeadlineState, isArchived, toLocalDate } from './tasks';
 import { occurrencesBetween, toDateString } from './recurrence';
 import { LOCALE_TAG } from '../i18n/locale';
@@ -6,22 +6,19 @@ import { LOCALE_TAG } from '../i18n/locale';
 // Elemento de la agenda en un día concreto
 export interface AgendaItem {
   key: string;
-  kind: 'task' | 'occurrence' | 'meeting';
+  kind: 'task' | 'occurrence';
   title: string;
   date: string; // YYYY-MM-DD
   time?: string; // HH:mm (sin hora: todo el día)
-  endTime?: string;
   // task: vence / empieza / en curso (intervalo) · occurrence: repetición prevista de una tarea recurrente. Es un
   // identificador: el texto que se ve, en el idioma de la app, lo pone AgendaView
-  label: 'Vence' | 'Empieza' | 'En curso' | 'Repetición prevista' | 'Reunión';
+  label: 'Vence' | 'Empieza' | 'En curso' | 'Repetición prevista';
   context?: ListContext;
   deadline: DeadlineState;
   task?: TaskItem;
 }
 
 const addDays = (d: Date, days: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + days);
-const pad = (n: number) => String(n).padStart(2, '0');
-const localTime = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 
 // Lunes de la semana de una fecha
 export const startOfWeek = (d: Date) =>
@@ -31,13 +28,8 @@ export const startOfWeek = (d: Date) =>
 export const daysFrom = (start: Date, count: number) =>
   Array.from({ length: count }, (_, i) => toDateString(addDays(start, i)));
 
-// Agrupa por día las tareas activas con fecha (plazos, intervalos y repeticiones previstas) y las reuniones
-export const buildAgenda = (
-  tasks: TaskItem[],
-  meetings: MeetingGuard[],
-  days: string[],
-  now = new Date()
-): Map<string, AgendaItem[]> => {
+// Agrupa por día las tareas activas con fecha: plazos, intervalos y repeticiones previstas
+export const buildAgenda = (tasks: TaskItem[], days: string[], now = new Date()): Map<string, AgendaItem[]> => {
   const agenda = new Map<string, AgendaItem[]>(days.map((d) => [d, []]));
   const first = days[0];
   const last = days[days.length - 1];
@@ -84,21 +76,6 @@ export const buildAgenda = (
         });
       }
     }
-  }
-
-  for (const meeting of meetings) {
-    const start = new Date(meeting.startTime);
-    const end = new Date(meeting.endTime);
-    add({
-      key: meeting.id,
-      kind: 'meeting',
-      title: meeting.title,
-      date: toDateString(start),
-      time: localTime(start),
-      endTime: localTime(end),
-      label: 'Reunión',
-      deadline: 'none'
-    });
   }
 
   // Dentro de cada día: primero lo que no tiene hora, después por hora

@@ -1,9 +1,9 @@
 # Requisitos del sistema — CLAR
 
-- **Versión:** 1.2.1
-- **Última revisión:** 2026-10-31
+- **Versión:** 1.3.0
+- **Última revisión:** 2026-11-01
 
-Este documento describe qué hace CLAR en la versión 1.2.1: sus requisitos funcionales y no funcionales tal como están implementados en el código de esta versión (la SPA de `src/`, las Cloud Functions de `functions/src/`, las reglas de Firestore, la configuración de Firebase Hosting y las pruebas). No recoge planes ni funciones futuras. Donde el README y el código no coinciden, manda el código.
+Este documento describe qué hace CLAR en la versión 1.3.0: sus requisitos funcionales y no funcionales tal como están implementados en el código de esta versión (la SPA de `src/`, las Cloud Functions de `functions/src/`, las reglas de Firestore, la configuración de Firebase Hosting y las pruebas). No recoge planes ni funciones futuras. Donde el README y el código no coinciden, manda el código.
 
 **Convenciones.** RF: requisito funcional. RNF: requisito no funcional. Los identificadores son estables: un requisito nuevo toma el siguiente número libre de su sección y uno retirado no se reutiliza. Los textos entre «» son etiquetas de la interfaz. «Origen» señala los archivos principales de cada sección.
 
@@ -187,35 +187,37 @@ Origen: `src/components/AgendaView.tsx`, `src/services/agenda.ts`.
 - **RF-AGE-02.** Se navega por semanas con anterior, siguiente y «Hoy», y se muestra el rango de fechas visible.
 - **RF-AGE-03.** La Agenda muestra las tareas abiertas con fecha límite de las dos listas. Un plazo sale el día en que vence («Vence»); un intervalo, los días en que empieza, sigue «En curso» y vence.
 - **RF-AGE-04.** Muestra las repeticiones previstas de las tareas recurrentes en fechas fijas («Repetición prevista»), hasta el fin de cada serie. De las que cuentan desde que se hacen, solo la repetición actual: las siguientes dependen de cuándo se hagan.
-- **RF-AGE-05.** Muestra las reuniones de «Tiempo protegido» con su hora de inicio y de fin.
+- **RF-AGE-05.** Retirado en la 1.3.0 (mostraba las reuniones de «Tiempo protegido»; ver 1.7).
 - **RF-AGE-06.** Dentro de cada día van primero los elementos sin hora y después los demás, por hora. Cada tarea lleva el color de su lista y el de su plazo (las que vencen hoy, en negrita).
 - **RF-AGE-07.** En la vista por días, las tareas vencidas salen aparte, en «Vencidas», y no se repiten en su día.
 - **RF-AGE-08.** Pulsar una tarea de la Agenda abre su edición.
 
-### 1.7 Tiempo protegido (RF-TIE)
+### 1.7 Tiempo protegido (RF-TIE), retirada en la 1.3.0
 
-Origen: `src/components/BermudasShield.tsx`, `src/components/MeetingModal.tsx`, `src/components/EmailModal.tsx`, `src/services/email.ts`.
+Origen: `src/services/repository.ts`, `src/services/importData.ts`, `firestore.rules`.
 
-- **RF-TIE-01.** «Tiempo protegido» reúne herramientas contra dos de las tres grandes fugas de tiempo: las reuniones mal planteadas y el correo reactivo.
-- **RF-TIE-02.** «Planificar una reunión» exige título (hasta 100 caracteres), fecha, hora de inicio y hora de fin posterior a la de inicio, el mismo día. Por defecto propone de 13:00 a 13:45.
-- **RF-TIE-03.** Una reunión que empieza antes de las 12:00 no se puede guardar. La app lo explica y ofrece «Pasarla a las 13:00» (de 13:00 a 13:45).
-- **RF-TIE-04.** La reunión exige un orden del día con al menos un punto, que empieza con dos puntos de ejemplo que se pueden quitar, y el nombre de quien la modera. El email de la persona moderadora es opcional.
-- **RF-TIE-05.** Las reuniones guardadas se listan con su hora, su duración, la persona moderadora y su orden del día. También salen en la Agenda y en el contador de Inicio.
-- **RF-TIE-06.** «Escribir un correo» sigue la redacción inversa: primero los adjuntos o «Sin archivos adjuntos», después el cuerpo (al menos 15 caracteres), el asunto (al menos 4) y, al final, los destinatarios.
-- **RF-TIE-07.** El campo de destinatarios está bloqueado hasta completar los adjuntos y el cuerpo. Los destinatarios se separan con comas, puntos y comas o espacios, y todos tienen que ser direcciones válidas.
-- **RF-TIE-08.** Si el cuerpo pasa de 100 palabras o de 550 caracteres, la app avisa de que es largo.
-- **RF-TIE-09.** «Elegir archivos» abre el selector del sistema. De cada adjunto se guardan solo el nombre y el tamaño, y un archivo ya elegido (mismo nombre y tamaño) se ignora.
-- **RF-TIE-10.** «Guardar el correo» exige los cuatro pasos. «Guardar borrador» guarda lo escrito sin exigirlos.
-- **RF-TIE-11.** Cerrar el editor con cambios los guarda como borrador. Un correo nuevo y vacío no se guarda.
-- **RF-TIE-12.** La sección separa «Borradores», que se abren con «Continuar», y «Guardados», que se abren con «Abrir». Al abrir uno se sigue editando el mismo documento.
-- **RF-TIE-13.** Un correo o un borrador se elimina con «Eliminar» y se recupera con «Deshacer», salvo que se haya vuelto a guardar entretanto.
-- **RF-TIE-14.** «Abrir en mi correo» abre el programa de correo con los destinatarios válidos, el asunto y el texto. CLAR no envía el correo; los adjuntos se añaden en el programa de correo.
+La sección «Tiempo protegido» (reuniones y correos) se retiró en la 1.3.0: sus ideas son ahora recomendaciones de la Ayuda (RF-NAV-16). La app ya no muestra ni crea reuniones ni correos. Los que se guardaron antes siguen en la cuenta, sin pantalla: van en la descarga (RF-CUE-15), la importación los trae (RF-CUE-28), se borran con la cuenta (RF-CUE-19) y las reglas siguen dejando a su dueño leerlos y borrarlos y, para la importación, escribirlos (RNF-SEG-03). Sus identificadores quedan retirados y no se reutilizan:
+
+- **RF-TIE-01.** Retirado en la 1.3.0 (la sección y su explicación del «triángulo de las Bermudas»).
+- **RF-TIE-02.** Retirado en la 1.3.0 (los datos obligatorios de una reunión).
+- **RF-TIE-03.** Retirado en la 1.3.0 (ninguna reunión antes de las 12:00).
+- **RF-TIE-04.** Retirado en la 1.3.0 (el orden del día y la persona moderadora).
+- **RF-TIE-05.** Retirado en la 1.3.0 (la lista de reuniones, que también salían en la Agenda y en Inicio).
+- **RF-TIE-06.** Retirado en la 1.3.0 (la redacción inversa de los correos).
+- **RF-TIE-07.** Retirado en la 1.3.0 (los destinatarios, al final).
+- **RF-TIE-08.** Retirado en la 1.3.0 (el aviso de correo largo).
+- **RF-TIE-09.** Retirado en la 1.3.0 (el nombre y el tamaño de los adjuntos).
+- **RF-TIE-10.** Retirado en la 1.3.0 (guardar el correo o su borrador).
+- **RF-TIE-11.** Retirado en la 1.3.0 (el borrador al cerrar el editor).
+- **RF-TIE-12.** Retirado en la 1.3.0 (las listas de borradores y guardados).
+- **RF-TIE-13.** Retirado en la 1.3.0 (eliminar un correo con «Deshacer»).
+- **RF-TIE-14.** Retirado en la 1.3.0 (abrir el correo en el programa de correo).
 
 ### 1.8 Inicio y estadísticas (RF-INI)
 
 Origen: `src/components/HomeView.tsx`, `src/services/stats.ts`.
 
-- **RF-INI-01.** La app abre en «Inicio», salvo en el primer arranque (RF-RUE-10). Inicio muestra el foco de la lista activa con tres indicadores: tareas en el Top 10 (sobre 10), promedio de la última evaluación de la Rueda con el número de evaluaciones, y número de reuniones.
+- **RF-INI-01.** La app abre en «Inicio», salvo en el primer arranque (RF-RUE-10). Inicio muestra el foco de la lista activa con dos indicadores: tareas en el Top 10 (sobre 10) y promedio de la última evaluación de la Rueda con el número de evaluaciones.
 - **RF-INI-02.** Las estadísticas son de la lista activa. Solo cuentan como hechas las tareas en estado Hecha.
 - **RF-INI-03.** Inicio muestra las tareas hechas hoy, esta semana (de lunes a domingo) y este mes, y avisa de las canceladas en el mes.
 - **RF-INI-04.** Muestra un gráfico de barras con las tareas hechas en cada uno de los últimos 14 días, acompañado de una tabla con los mismos datos.
@@ -238,14 +240,14 @@ Origen: `src/components/HomeView.tsx`, `src/services/stats.ts`.
 
 Origen: `src/navigation.ts`, `src/components/Navbar.tsx`, `src/components/BottomNav.tsx`, `src/components/MoreSheet.tsx`, `src/components/SyncIndicator.tsx`, `src/components/HowItWorks.tsx`, `src/components/ReleaseNotes.tsx`, `src/services/releaseNotes.ts`, `src/services/celebrations.ts`, `src/components/CelebrationBurst.tsx`.
 
-- **RF-NAV-01.** Las secciones son Inicio, Listas, Agenda, Rueda de la Vida, Metas, Proyectos, Tiempo protegido y Ayuda. Administración solo aparece para la persona administradora, delante de Ayuda.
+- **RF-NAV-01.** Las secciones son Inicio, Listas, Agenda, Rueda de la Vida, Metas, Proyectos y Ayuda. Administración solo aparece para la persona administradora, delante de Ayuda.
 - **RF-NAV-02.** Desde 768 px de ancho, la cabecera lleva las secciones, las dos listas, el indicador de sincronización y la cuenta. «Nueva tarea» va debajo de la cabecera.
 - **RF-NAV-03.** Por debajo de 768 px, una barra inferior lleva Inicio, Listas, Agenda, Metas y «Más», que abre una hoja con las demás secciones, la sincronización y la cuenta. Un botón flotante abre «Nueva tarea».
 - **RF-NAV-04.** El indicador de sincronización está verde cuando todo está confirmado por el servidor y naranja con cambios pendientes, sin conexión o mientras sincroniza.
 - **RF-NAV-05.** Pulsar el indicador fuerza la sincronización: reabre la conexión y espera la confirmación del servidor, como mucho 15 s. Un aviso dice si lo consiguió.
 - **RF-NAV-06.** Cada acción que guarda, elimina o cambia algo muestra un aviso breve. Los avisos con «Deshacer» duran 5 s; los demás, 4 s. Con una celebración (RF-NAV-15), 3 s más.
 - **RF-NAV-07.** Al arrancar, la app muestra una pantalla de inicio que se cierra sola en 1,6 s o al tocarla.
-- **RF-NAV-08.** «Ayuda» explica cada sección con un botón «Ir a…», los primeros pasos, cómo se relacionan las secciones, dónde se guardan los datos, la accesibilidad y los créditos. Las funciones extra solo se explican a la cuenta que las tiene en uso.
+- **RF-NAV-08.** «Ayuda» explica cada sección con un botón «Ir a…», los primeros pasos, las recomendaciones para proteger el tiempo (RF-NAV-16), cómo se relacionan las secciones, dónde se guardan los datos, la accesibilidad y los créditos. Las funciones extra solo se explican a la cuenta que las tiene en uso.
 - **RF-NAV-09.** Desde «Ayuda» se puede «Repetir el recorrido», «Ver la introducción» y abrir «Escríbenos».
 - **RF-NAV-10.** El pie muestra la versión de la app (que abre sus novedades), «Ver la ayuda» y los enlaces a los textos legales, que se abren en otra pestaña.
 - **RF-NAV-11.** Si una sección o ventana no se puede descargar, la app muestra un aviso con «Reintentar» en su lugar y el resto sigue funcionando. Una ventana que aún se está descargando se puede cancelar.
@@ -253,6 +255,7 @@ Origen: `src/navigation.ts`, `src/components/Navbar.tsx`, `src/components/Bottom
 - **RF-NAV-13.** La versión de la cabecera (desde 640 px) y la del pie abren las novedades de la versión. «Ayuda» tiene el apartado «Novedades», con la versión actual a la vista y las anteriores plegadas. Cada versión publicada tiene su entrada, con la misma versión que la app (una prueba lo comprueba). Las novedades nunca anuncian las funciones extra (otra prueba lo comprueba).
 - **RF-NAV-14.** Una dirección que no es la de la app ni la de un texto legal muestra «Página no encontrada», con «Ir a CLAR» y los textos legales. `robots.txt` deja indexar la portada y los textos legales.
 - **RF-NAV-15.** Celebraciones: al marcar como hecha, desde un estado abierto, una tarea creada hace 14 días o más (14 × 24 h; las recurrentes no cuentan, cada repetición es nueva), al lograr una meta activa o al terminar un proyecto activo, el aviso añade debajo un mensaje motivador y sale un confeti breve (unos 2 s) en los colores de la marca. El mensaje se elige al azar entre al menos 12 de cada tipo, sin repetir el último de su tipo; los de las tareas pueden decir cuántos días llevaba en la lista. Solo se celebra lo que se hace en esa pestaña, una vez por tarea, meta o proyecto y sesión (hacerla, deshacer y volver a hacerla no lo repite); nunca al cancelar, eliminar, archivar, reactivar, deshacer o importar, ni por cambios de otras pestañas o dispositivos. «Deshacer» sigue en el aviso y quita el confeti. El confeti es decorativo (oculto a los lectores de pantalla, no recibe el puntero) y con menos movimiento no se ve; el mensaje, sí. Se desactivan en el panel «Accesibilidad», en cada dispositivo (activadas por defecto).
+- **RF-NAV-16.** «Ayuda» tiene el apartado «Recomendaciones para proteger tu tiempo», solo con consejos, sin botones ni referencias a pantallas: el «triángulo de las Bermudas» del tiempo (las reuniones, el correo y los mensajes); las mañanas libres de reuniones para el trabajo concentrado (por ejemplo, ninguna antes de las 12:00) y las reuniones a primera hora de la tarde; cada reunión con hora de fin, un orden del día cerrado y alguien que la modere; los correos empezando por el contenido y los adjuntos, con los destinatarios al final; y el correo y los mensajes en bloques, a horas fijas.
 
 ### 1.10 Cuentas y acceso (RF-CUE)
 
@@ -280,7 +283,7 @@ Origen: `src/AuthGate.tsx`, `src/AccessGate.tsx`, `src/services/auth.ts`, `src/s
 **Gestión de la cuenta**
 
 - **RF-CUE-14.** El menú de la cuenta muestra el nombre, la foto o las iniciales y cómo se entró en esta sesión (Google o email). Da acceso a «Notificaciones de las alarmas» (activar el permiso y, si la instalación tiene push, «Avisarme también con CLAR cerrada» y «Mostrar el nombre de la tarea»), «Accesibilidad», «Descargar mis datos (JSON)», «Importar datos (JSON)», «Funciones extra» (si la cuenta tiene alguna; la persona administradora, siempre), «Escríbenos», la seguridad, «Cerrar sesión» y la eliminación de la cuenta.
-- **RF-CUE-15.** «Descargar mis datos (JSON)» descarga los datos de la app: tareas, borradores de tareas, evaluaciones, reuniones, correos, metas, proyectos, áreas de la Rueda, nombre y email (los borradores no se importan). No incluye el resto del perfil, la solicitud de acceso, las funciones extra ni los mensajes de «Escríbenos».
+- **RF-CUE-15.** «Descargar mis datos (JSON)» descarga los datos de la app: tareas, borradores de tareas, evaluaciones, metas, proyectos, áreas de la Rueda, nombre y email (los borradores no se importan), y las reuniones y los correos que se guardaron antes de la 1.3.0 (ver 1.7). No incluye el resto del perfil, la solicitud de acceso, las funciones extra ni los mensajes de «Escríbenos».
 - **RF-CUE-16.** Una cuenta con contraseña puede «Cambiar la contraseña» escribiendo la actual y una nueva de al menos 8 caracteres.
 - **RF-CUE-17.** «Cerrar sesión en todos los dispositivos» invalida las sesiones de la cuenta y cierra la de este dispositivo. Los demás pierden el acceso en menos de una hora.
 - **RF-CUE-18.** «Cerrar sesión» borra la copia local de los datos del dispositivo. Si hay otras pestañas de la app abiertas, la copia se queda hasta cerrar sesión con una sola.
@@ -288,11 +291,11 @@ Origen: `src/AuthGate.tsx`, `src/AccessGate.tsx`, `src/services/auth.ts`, `src/s
 
 **Primera vez**
 
-- **RF-CUE-20.** La bienvenida se muestra una sola vez por cuenta, en tres pantallas («Por qué», «El método» y «Cómo empezar»). «El método» va de las áreas de vida a las metas, los proyectos (opcionales: uno o varios por meta para agrupar tareas relacionadas), las tareas, el Top 10 y la Agenda, y el tiempo protegido. Se salta en cualquier momento con «Saltar» o Escape.
+- **RF-CUE-20.** La bienvenida se muestra una sola vez por cuenta, en tres pantallas («Por qué», «El método» y «Cómo empezar»). «El método» va de las áreas de vida a las metas, los proyectos (opcionales: uno o varios por meta para agrupar tareas relacionadas), las tareas, y el Top 10 y la Agenda. El último paso de «Cómo empezar» propone reservar las mañanas sin reuniones y remite a las recomendaciones de la Ayuda. Se salta en cualquier momento con «Saltar» o Escape.
 - **RF-CUE-21.** Que la bienvenida ya se vio se guarda en el perfil y en el dispositivo, así no se repite sin conexión ni en otro dispositivo. Mientras el perfil no llega del servidor, la bienvenida espera.
 - **RF-CUE-22.** Al terminar la bienvenida empieza un recorrido guiado de 10 pasos por los elementos principales (entre ellos, «Proyectos (opcional)», en el móvil dentro de «Más»), que empieza en «Listas». Se maneja con las flechas y Escape, y salta los pasos cuyo elemento no se ve.
 - **RF-CUE-23.** Al acabar el recorrido de la primera vez, la app abre la Rueda si la cuenta aún no tiene evaluaciones.
-- **RF-CUE-24.** Si el navegador guarda datos de la versión anterior sin cuentas, la app ofrece importarlos en el primer inicio de sesión, antes de la bienvenida. Se eligen los perfiles que importar (con sus tareas, evaluaciones, reuniones y correos); los datos de demostración nunca se importan.
+- **RF-CUE-24.** Si el navegador guarda datos de la versión anterior sin cuentas, la app ofrece importarlos en el primer inicio de sesión, antes de la bienvenida. Se eligen los perfiles que importar (con sus tareas, evaluaciones, reuniones y correos; estos dos se guardan sin pantalla, ver 1.7); los datos de demostración nunca se importan.
 - **RF-CUE-25.** Importar borra del navegador todos los datos locales antiguos, también los de los perfiles no marcados. «Descartar» los borra sin importar, previa confirmación, y «Más tarde» deja la decisión para otro momento.
 
 **Importar datos**
@@ -303,8 +306,9 @@ Origen: `src/AuthGate.tsx`, `src/AccessGate.tsx`, `src/services/auth.ts`, `src/s
 - **RF-CUE-29.** La importación muestra su avance y no se puede cerrar mientras escribe. Sin conexión no empieza. Si la conexión se pierde o la importación lleva un minuto sin avanzar, lo dice y deja cerrar la ventana: sigue sola al volver la conexión, y si se cierra CLAR antes, volver a importar el archivo completa el resto. Si falla, dice cuántos registros entraron.
 - **RF-CUE-30.** «Funciones extra», en el menú de la cuenta, muestra las que la persona administradora le ha activado, con su descripción y sin interruptor. La persona administradora las tiene todas, con un interruptor por función: empiezan apagadas y lo que elige se guarda en su perfil.
 - **RF-CUE-31.** «Compartir CLAR», en el menú de la cuenta, abre el menú de compartir del dispositivo con el nombre, la frase de la app y su dirección; donde no lo hay, copia la dirección y lo dice. Cerrar el menú de compartir no es un error.
-- **RF-CUE-32.** Sin sesión iniciada, la pantalla de entrada es también la página de presentación: qué es CLAR (la Rueda, las metas y proyectos, el Top 10, la agenda y las alarmas, el tiempo protegido, el dictado y el uso sin conexión), cómo se tratan los datos, que es de código abierto (con enlace al repositorio) y, al lado (debajo en el móvil), cómo entrar. «Crear cuenta gratis» lleva al formulario en «Crear una cuenta», y «Ya tengo cuenta», a «Entrar». Las funciones extra no se anuncian. Al compartir el enlace, se ve una tarjeta con el logo, el nombre y la frase (Open Graph, `public/og-image.png`).
+- **RF-CUE-32.** Sin sesión iniciada, la pantalla de entrada es también la página de presentación: qué es CLAR (la Rueda, las metas y proyectos, el Top 10, la agenda y las alarmas, el dictado y el uso sin conexión), cómo se tratan los datos, que es de código abierto (con enlace al repositorio) y, al lado (debajo en el móvil), cómo entrar. «Crear cuenta gratis» lleva al formulario en «Crear una cuenta», y «Ya tengo cuenta», a «Entrar». Las funciones extra no se anuncian. Al compartir el enlace, se ve una tarjeta con el logo, el nombre y la frase (Open Graph, `public/og-image.png`).
 - **RF-CUE-33.** La app está en español (por defecto) o en inglés. «Español / English» está arriba en la página de inicio y en el menú de la cuenta; al cambiarlo, la app se vuelve a cargar en ese idioma. Un enlace con `?lang=en` (o `?lang=es`) abre la app en ese idioma y lo guarda en el dispositivo; una cuenta sin idioma, o nueva, se queda con él, y una que ya tiene uno lo conserva (esa visita se ve en el del enlace). El parámetro se quita de la dirección. La elección se guarda en el dispositivo y en la cuenta (`users/{uid}.language`): elegida antes de entrar, pasa a la cuenta al entrar; si no, al abrir la app manda la de la cuenta (solo al abrirla, no mientras se usa). Se traducen la interfaz, la ayuda, las novedades, los textos legales (en inglés, con el aviso de que vale la versión en español y un botón para cambiar a ella), los emails a la persona (verificación y contraseña, acceso aprobado, respuestas a sus mensajes), las notificaciones push (cada dispositivo registra su idioma), los mensajes de error del servidor y los eventos de Google Calendar. Lo que escribe la persona no se traduce; las áreas de partida de la Rueda sin renombrar se ven en el idioma de la app. Las fechas y los números siguen el idioma (en inglés, con el formato europeo: 24 h y el día antes que el mes) y el dictado se hace en él. Los emails a la administración siguen en español. Los accesos directos del icono y la descripción del enlace al compartir van en los dos idiomas.
+- **RF-CUE-34.** Si la cuenta tiene reuniones o correos guardados con versiones anteriores a la 1.3.0, el menú de la cuenta lo dice y ofrece eliminarlos, con confirmación («Se borrarán para siempre»). Se cuentan en el servidor al abrir el menú (sin conexión no se ofrece). La descarga de los datos los lee del servidor: sin conexión, avisa en lugar de dejarlos fuera.
 
 ### 1.11 Administración (RF-ADM)
 
@@ -383,7 +387,7 @@ Origen: `firestore.rules`, `firebase.json`, `functions/src/access.ts`, `function
 
 - **RNF-SEG-01.** Las reglas de Firestore solo dejan a cada cuenta leer y escribir en `users/{uid}` y sus subcolecciones. Lo que no coincide con ninguna regla queda denegado.
 - **RNF-SEG-02.** Crear y modificar datos exige el acceso aprobado. Leer y borrar los propios datos se permite siempre, para que una cuenta sin acceso pueda llevárselos o eliminarlos.
-- **RNF-SEG-03.** Las subcolecciones permitidas son siete: tareas, borradores de tareas, evaluaciones, reuniones, correos, metas y proyectos. El perfil solo admite sus campos conocidos (datos de la cuenta, bienvenida, novedades vistas, áreas de la Rueda y funciones extra encendidas).
+- **RNF-SEG-03.** Las subcolecciones permitidas son siete: tareas, borradores de tareas, evaluaciones, reuniones, correos, metas y proyectos. Las reuniones y los correos ya no los crea la app (1.7), pero se siguen admitiendo para que la importación los traiga. El perfil solo admite sus campos conocidos (datos de la cuenta, bienvenida, novedades vistas, áreas de la Rueda y funciones extra encendidas).
 - **RNF-SEG-04.** Las solicitudes de acceso, las marcas de administración, la configuración, las funciones extra de cada cuenta, la lista negra y el contador de mensajes solo los escriben las Cloud Functions. Ningún cliente puede escribirlos, tampoco la persona administradora.
 - **RNF-SEG-05.** Cada cuenta lee solo su propia solicitud de acceso y sus funciones extra, y la persona administradora, todas. Nadie lee desde la app la lista negra ni el contador de mensajes.
 - **RNF-SEG-06.** Las reglas reconocen a la persona administradora solo si existe su marca y el email guardado en ella coincide con el del token de quien lee.
@@ -409,7 +413,7 @@ Origen: `functions/src/accessLogic.ts`, `functions/src/calendarCleanup.ts`, `fun
 - **RNF-PRI-03.** Los emails de aviso a la persona administradora no llevan datos de quien escribe ni el contenido: se leen en la app. Los emails que envían las Cloud Functions son de texto plano.
 - **RNF-PRI-04.** Los registros (logs) de las funciones no incluyen datos personales ni el identificador de la cuenta.
 - **RNF-PRI-05.** La información técnica de un mensaje de contacto es opcional, se ve antes de enviarla y no incluye el identificador completo del navegador (user-agent).
-- **RNF-PRI-06.** De los adjuntos de un correo solo se guardan el nombre y el tamaño. Los archivos no salen del dispositivo.
+- **RNF-PRI-06.** De los adjuntos de los correos guardados antes de la 1.3.0 solo se guardaron el nombre y el tamaño: los archivos nunca salieron del dispositivo.
 - **RNF-PRI-07.** Las descargas (JSON e .ics) se generan en el navegador, sin pasar por ningún servidor. Los enlaces al calendario no conectan ninguna cuenta; la sincronización con Google Calendar (RF-GCA) es aparte y opcional.
 - **RNF-PRI-08.** El Top 10, las sugerencias, las estadísticas y las recomendaciones se calculan en el navegador.
 - **RNF-PRI-09.** La app no carga fuentes externas: usa la tipografía del sistema. No incluye herramientas de analítica ni de seguimiento.
@@ -452,7 +456,7 @@ Origen: `src/services/firebase.ts`, `src/services/repository.ts`, `src/lazy.tsx`
 
 Origen: `src/App.tsx`, `src/Root.tsx`, `src/lazy.tsx`, `vite.config.ts`, `firebase.json`.
 
-- **RNF-REN-01.** Las secciones y ventanas que no se ven al arrancar se descargan la primera vez que se abren: Agenda, Rueda, Metas, Proyectos, Tiempo protegido, Ayuda, Administración, la vista previa de la importación, los editores de metas, proyectos y áreas, la bienvenida, el recorrido y las novedades.
+- **RNF-REN-01.** Las secciones y ventanas que no se ven al arrancar se descargan la primera vez que se abren: Agenda, Rueda, Metas, Proyectos, Ayuda, Administración, la vista previa de la importación, los editores de metas, proyectos y áreas, la bienvenida, el recorrido y las novedades.
 - **RNF-REN-02.** Las páginas legales se cargan sin Firebase ni el resto de la app.
 - **RNF-REN-03.** Las librerías van en paquetes aparte (Firebase, React y el resto; las notificaciones push de Firebase, en otro que solo se descarga si se activan), que el navegador conserva entre versiones. Los archivos de `/assets/` se sirven con caché de un año, como inmutables.
 - **RNF-REN-04.** Los cálculos (Top 10, estadísticas, sugerencias, agenda y alarmas) se hacen en el navegador sobre los datos ya cargados. Los estados que dependen de la hora se recalculan cada minuto.
@@ -483,7 +487,7 @@ Origen: `package.json`, `tsconfig.json`, `.github/workflows/ci.yml`, `tests/`, `
 - **RNF-MAN-04.** Las pruebas de extremo a extremo (Playwright), un archivo por función de la app, usan los emuladores de Auth, Firestore y Functions con un proyecto de demostración. Antes de todas, un paso de calentamiento (`tests/e2e/warm-up.setup.ts`) carga la app y despierta los emuladores, y en desarrollo Vite busca las dependencias de todo `src` al arrancar, así ninguna prueba paga el arranque en frío.
 - **RNF-MAN-05.** En cada push y pull request, CI comprueba el formato, el linter, los tipos, la compilación de la app y de las funciones, y todas las pruebas. Solo despliega desde la rama principal, si todo pasa, y de un despliegue en uno.
 - **RNF-MAN-06.** La app toma la versión de `package.json`; `public/manifest.json` la repite y se actualiza a mano. Se muestra en la cabecera, el inicio de sesión y el pie, y va en las descargas y en la información técnica del contacto.
-- **RNF-MAN-07.** La app sigue leyendo los datos de versiones anteriores: tareas sin estado (con `completed`), correos sin estado, adjuntos sin bytes, repeticiones con fecha de inicio y repeticiones sin `from` (en fechas fijas), y borradores de tareas sin la elección de contar desde que se hace.
+- **RNF-MAN-07.** La app sigue leyendo los datos de versiones anteriores: tareas sin estado (con `completed`), repeticiones con fecha de inicio y repeticiones sin `from` (en fechas fijas), y borradores de tareas sin la elección de contar desde que se hace. La importación admite además correos sin estado y adjuntos sin bytes.
 - **RNF-MAN-08.** Los textos de la app van junto a donde se usan, con `messages(es, en)` (`src/i18n/locale.ts`): el catálogo inglés tiene la misma forma que el español, así que si falta un texto, no compila. El idioma es fijo mientras la página está abierta. Las fechas y los números usan `LOCALE_TAG`. En el servidor, `functions/src/i18n.ts` hace lo mismo, y los mensajes de error van en el idioma de quien llama (`functions/src/callable.ts`). Hay pruebas unitarias en inglés (`tests/unit/*-en.test.ts`, `functions/test/english.test.ts`) y una e2e del cambio de idioma.
 
 ---
@@ -492,10 +496,8 @@ Origen: `package.json`, `tsconfig.json`, `.github/workflows/ci.yml`, `tests/`, `
 
 Lo que el código no hace y un lector podría esperar:
 
-- CLAR no envía correos ni sube adjuntos: los guarda y los pasa al programa de correo.
+- CLAR no redacta ni envía los correos de la persona ni planifica sus reuniones: desde la 1.3.0 solo da recomendaciones en la Ayuda.
 - Solo se conecta con Google Calendar, y en un solo sentido (RF-GCA): con los demás calendarios, solo exporta con enlaces y archivos .ics.
-- «Tiempo protegido» no tiene herramienta para la tercera fuga de tiempo, los mensajes.
-- Las reuniones no se pueden editar ni eliminar desde la app.
+- Las reuniones y los correos guardados antes de la 1.3.0 no se ven ni se editan desde la app: van en la descarga y se eliminan todos juntos desde el menú de la cuenta (RF-CUE-34) o con la cuenta.
 - Las evaluaciones de la Rueda no se editan ni se borran una a una, y las áreas no se eliminan ni se reordenan.
 - No hay listas compartidas ni colaboración: cada cuenta solo ve lo suyo.
-- La interfaz solo está en español.

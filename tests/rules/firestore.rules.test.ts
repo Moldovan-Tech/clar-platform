@@ -161,6 +161,27 @@ describe('firestore.rules', () => {
     await assertSucceeds(deleteDoc(ref));
   });
 
+  // «Tiempo protegido» se retiró en la 1.3.0: la app ya no crea reuniones ni correos, pero los guardados siguen en la
+  // cuenta (descarga y borrado) y la importación los vuelve a escribir
+  it('keeps meetings and emails private to their owner, who can still read, import and delete them', async () => {
+    const ana = env.authenticatedContext('ana').firestore();
+    const bruno = env.authenticatedContext('bruno').firestore();
+    const meeting = doc(ana, 'users/ana/meetings/meet-1');
+    const email = doc(ana, 'users/ana/emails/email-1');
+
+    const batch = writeBatch(ana);
+    batch.set(meeting, { id: 'meet-1', userId: 'ana', title: 'Revisión semanal', agendaPoints: ['Estado'] });
+    batch.set(email, { id: 'email-1', userId: 'ana', subject: 'Acta', recipients: ['equipo@example.com'] });
+    await assertSucceeds(batch.commit());
+    await assertSucceeds(getDocs(collection(ana, 'users/ana/meetings')));
+    await assertSucceeds(getDocs(collection(ana, 'users/ana/emails')));
+    await assertFails(getDoc(doc(bruno, 'users/ana/meetings/meet-1')));
+    await assertFails(getDoc(doc(bruno, 'users/ana/emails/email-1')));
+    await assertFails(deleteDoc(doc(bruno, 'users/ana/emails/email-1')));
+    await assertSucceeds(deleteDoc(meeting));
+    await assertSucceeds(deleteDoc(email));
+  });
+
   it('rejects oversized writes (many fields, huge texts or lists) but accepts generous ones', async () => {
     const ana = env.authenticatedContext('ana').firestore();
     const ref = doc(ana, 'users/ana/tasks/task-big');
