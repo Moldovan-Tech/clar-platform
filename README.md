@@ -1,7 +1,7 @@
 # CLAR — decide qué hacer ahora, con claridad
 
-[![CI](https://github.com/OvidiuMM/neuroproductivity-platform/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/OvidiuMM/neuroproductivity-platform/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/OvidiuMM/neuroproductivity-platform?color=4f46e5)](https://github.com/OvidiuMM/neuroproductivity-platform/releases)
+[![CI](https://github.com/Moldovan-Tech/clar-platform/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Moldovan-Tech/clar-platform/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Moldovan-Tech/clar-platform?color=4f46e5)](https://github.com/Moldovan-Tech/clar-platform/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![React](https://img.shields.io/badge/React-19-61dafb.svg?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-7.x-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -34,7 +34,7 @@ offline, in Spanish or English.
 - **Run it locally** (Node.js ≥ 22.12 and Java 21 for the emulators; no Firebase account needed):
 
   ```bash
-  git clone https://github.com/OvidiuMM/neuroproductivity-platform.git && cd neuroproductivity-platform
+  git clone https://github.com/Moldovan-Tech/clar-platform.git && cd clar-platform
   npm ci && npm ci --prefix functions && npm ci --prefix tools/eslint
   npm run dev   # emulators + app; sign in with the emulated Google account admin@example.com
   ```
@@ -283,8 +283,8 @@ La lista completa y numerada de lo que hace la app, con sus requisitos no funcio
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/OvidiuMM/neuroproductivity-platform.git
-cd neuroproductivity-platform
+git clone https://github.com/Moldovan-Tech/clar-platform.git
+cd clar-platform
 
 # 2. Instalar dependencias (frontend y Cloud Functions)
 npm ci
@@ -434,7 +434,7 @@ Configuración inicial, una sola vez, con una cuenta propietaria del proyecto:
 PROJECT_ID=<project-id>
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
 SA="github-deployer@$PROJECT_ID.iam.gserviceaccount.com"
-REPO_ID=1408574835  # gh api repos/OvidiuMM/neuroproductivity-platform -q .id
+REPO_ID=1408574835  # gh api repos/Moldovan-Tech/clar-platform -q .id
 
 # 1. Cuenta de servicio con los permisos para desplegar Hosting, Functions y las reglas de Firestore
 #    (secretmanager.viewer: el CLI comprueba el secreto SMTP_PASSWORD al desplegar)

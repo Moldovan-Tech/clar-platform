@@ -176,7 +176,7 @@ const FEATURES: { icon: React.ReactNode; title: string; text: string }[] = [
   { icon: <WifiOff className="h-5 w-5 text-indigo-600" aria-hidden="true" />, ...m.features.offline }
 ];
 
-export const REPOSITORY_URL = 'https://github.com/OvidiuMM/neuroproductivity-platform';
+export const REPOSITORY_URL = 'https://github.com/Moldovan-Tech/clar-platform';
 
 // PÁGINA DE PRESENTACIÓN: qué es CLAR y, al lado (debajo en el móvil), cómo entrar o crear una cuenta
 export const LoginScreen: React.FC<LoginScreenProps> = ({
