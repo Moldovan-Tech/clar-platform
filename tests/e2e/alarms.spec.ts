@@ -9,7 +9,8 @@ import {
   uniqueEmail
 } from './helpers';
 
-test.use({ timezoneId: 'Europe/Madrid' });
+const MADRID = 'Europe/Madrid';
+test.use({ timezoneId: MADRID });
 
 // Notificaciones del sistema de prueba: se apuntan en window.__notifications. El permiso empieza sin decidir.
 const fakeNotifications = (target: Page | BrowserContext, initial: NotificationPermission = 'default') =>
@@ -69,7 +70,7 @@ const newTaskWithAlarm = async (page: Page, title: string, due: { date: string; 
 test('an alarm warns in CLAR and with a system notification, only once', async ({ page }) => {
   test.slow(); // Recarga la página
   await fakeNotifications(page);
-  await installClockAwayFromMidnight(page);
+  await installClockAwayFromMidnight(page, MADRID);
   await page.goto('/');
   await signInWithGoogle(page);
   await openSection(page, 'Listas');
@@ -128,6 +129,7 @@ test('an alarm that passed with CLAR closed warns on opening while the task is n
       original.call(this, key, value);
     };
   });
+  await installClockAwayFromMidnight(page, MADRID);
   const email = uniqueEmail();
   await page.goto('/');
   await signInWithGoogle(page, email);
@@ -210,7 +212,7 @@ test('an alarm needs a due date; it rings that day, before the due time if there
 
 test('an alarm saved after its time says it will not ring, and does not', async ({ page }) => {
   await fakeNotifications(page, 'granted');
-  await installClockAwayFromMidnight(page);
+  await installClockAwayFromMidnight(page, MADRID);
   await page.goto('/');
   await signInWithGoogle(page);
   await openSection(page, 'Listas');
@@ -232,12 +234,12 @@ test('with two tabs open, both show the alert and the system notification comes 
   test.slow(); // Dos pestañas
   await fakeNotifications(context, 'granted');
   const first = await context.newPage();
-  await installClockAwayFromMidnight(first);
+  await installClockAwayFromMidnight(first, MADRID);
   await first.goto('/');
   await signInWithGoogle(first);
   await openSection(first, 'Listas');
   const second = await context.newPage();
-  await installClockAwayFromMidnight(second);
+  await installClockAwayFromMidnight(second, MADRID);
   await second.goto('/');
   await openSection(second, 'Listas');
 
@@ -265,7 +267,7 @@ test('on Android the notification comes from the service worker, and the account
   });
   await fakeNotifications(context);
   const page = await context.newPage();
-  await installClockAwayFromMidnight(page);
+  await installClockAwayFromMidnight(page, MADRID);
   await page.goto('/');
   await signInWithGoogle(page);
   await expect
@@ -332,6 +334,7 @@ test('an alarm that already arrived by push is not notified again on opening CLA
   page
 }) => {
   await fakeNotifications(page, 'granted');
+  await installClockAwayFromMidnight(page, MADRID);
   const email = uniqueEmail();
   await page.goto('/');
   await signInWithGoogle(page, email);
@@ -348,6 +351,7 @@ test('an alarm that already arrived by push is not notified again on opening CLA
 });
 
 test('tapping an alarm notification opens its task, with CLAR closed or open', async ({ page }) => {
+  await installClockAwayFromMidnight(page, MADRID);
   const email = uniqueEmail();
   await page.goto('/');
   await signInWithGoogle(page, email);

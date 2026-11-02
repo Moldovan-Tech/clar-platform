@@ -75,19 +75,28 @@ test('the account menu switches the language and saves it in the account; the ac
   await expect(page.getByRole('button', { name: 'Lists', exact: true }).first()).toBeVisible({ timeout: 15_000 });
   await expect.poll(async () => (await readDocument(`users/${uid}`))?.language).toBe('en');
 
-  // Otro dispositivo (sin nada guardado) con la cuenta en inglés: al abrir, la app se pone en inglés
+  // Otro dispositivo (sin nada guardado) con la cuenta en inglés: al abrir, la app adopta el de la cuenta. Si el perfil
+  // llega en los primeros segundos, recarga al momento; si llega después (en CI puede pasar), lo deja guardado para la
+  // próxima vez: en los dos casos, el dispositivo acaba con el idioma de la cuenta
+  const adopts = async (language: 'es' | 'en') => {
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('clar_locale')), { timeout: 20_000 })
+      .toBe(language);
+    await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('lang', language, { timeout: 15_000 });
+  };
   await page.evaluate(() => {
     localStorage.removeItem('clar_locale');
     localStorage.removeItem('clar_locale_pending');
   });
   await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en', { timeout: 15_000 });
+  await adopts('en');
 
   // Y al revés: el dispositivo en inglés, la cuenta en español (cambiada desde otro dispositivo): manda la cuenta
   await patchDocument(`users/${uid}`, { language: { stringValue: 'es' } });
   await page.evaluate(() => localStorage.setItem('clar_locale', 'en'));
   await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'es', { timeout: 15_000 });
+  await adopts('es');
   await expect(page.getByRole('button', { name: 'Listas', exact: true }).first()).toBeVisible();
 });
 
