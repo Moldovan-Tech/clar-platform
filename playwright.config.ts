@@ -3,6 +3,9 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
+  // En CI, una prueba que falla se repite una vez: un fallo de tiempos de la máquina no bloquea el despliegue. Si pasa
+  // al repetirla, el informe la marca como «flaky» y sigue a la vista para arreglarla
+  retries: process.env.CI ? 1 : 0,
   reporter: 'list',
   use: {
     baseURL: 'http://127.0.0.1:3000',

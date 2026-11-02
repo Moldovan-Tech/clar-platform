@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { expectNoHorizontalOverflow, expectNoInnerOverflow, openSection, signInWithGoogle } from './helpers';
 
 // En escritorio las secciones son pestañas; en el móvil (< 768 px) están en el menú de la cabecera
-const SECTIONS = ['Inicio', 'Listas', 'Agenda', 'Rueda de la Vida', 'Metas', 'Proyectos', 'Tiempo protegido', 'Ayuda'];
+const SECTIONS = ['Inicio', 'Listas', 'Agenda', 'Rueda de la Vida', 'Metas', 'Proyectos', 'Ayuda'];
 
 for (const width of [360, 375, 768, 1280]) {
   test(`no horizontal overflow at ${width}px`, async ({ page }) => {

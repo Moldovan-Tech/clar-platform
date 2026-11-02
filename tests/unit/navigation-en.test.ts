@@ -17,7 +17,6 @@ test('sections have English names, and the phone short name is part of the full 
       ['Wheel of Life', 'Wheel'],
       ['Goals', 'Goals'],
       ['Projects', 'Projects'],
-      ['Protected time', 'Time'],
       ['Admin', 'Admin'],
       ['Help', 'Help']
     ]
@@ -25,6 +24,11 @@ test('sections have English names, and the phone short name is part of the full 
   for (const section of sectionsFor(true).filter((s) => PRIMARY_TABS.includes(s.tab))) {
     assert.ok(section.label.includes(section.short), section.label);
   }
+});
+
+// «Tiempo protegido» se retiró en la 1.3.0: sus recomendaciones están en la Ayuda
+test('there is no “Protected time” section any more', () => {
+  for (const section of sectionsFor(true)) assert.doesNotMatch(`${section.label} ${section.short}`, /protected|time/i);
 });
 
 test('the admin section says how many items are pending', () => {
