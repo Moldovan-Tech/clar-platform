@@ -79,8 +79,9 @@ test('the account menu switches the language and saves it in the account; the ac
   // llega en los primeros segundos, recarga al momento; si llega después (en CI puede pasar), lo deja guardado para la
   // próxima vez: en los dos casos, el dispositivo acaba con el idioma de la cuenta
   const adopts = async (language: 'es' | 'en') => {
+    // Si la app se recarga sola justo mientras se lee (al adoptar el idioma), ese intento no cuenta y se repite
     await expect
-      .poll(() => page.evaluate(() => localStorage.getItem('clar_locale')), { timeout: 20_000 })
+      .poll(() => page.evaluate(() => localStorage.getItem('clar_locale')).catch(() => null), { timeout: 20_000 })
       .toBe(language);
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('lang', language, { timeout: 15_000 });
