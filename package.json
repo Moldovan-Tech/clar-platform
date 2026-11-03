@@ -60,5 +60,10 @@
       "tools/eslint/node_modules/.bin/eslint --config tools/eslint/eslint.config.js --max-warnings 0 --fix"
     ],
     "*.{js,mjs,cjs,json,md,css,html,yml,yaml}": "prettier --write"
+  },
+  "overrides": {
+    "@firebase/firestore": {
+      "@grpc/grpc-js": "^1.13.6"
+    }
   }
 }
