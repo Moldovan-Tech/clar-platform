@@ -1,9 +1,9 @@
 # Requisitos del sistema — CLAR
 
-- **Versión:** 1.3.1
-- **Última revisión:** 2026-11-02
+- **Versión:** 1.3.2
+- **Última revisión:** 2026-11-05
 
-Este documento describe qué hace CLAR en la versión 1.3.1: sus requisitos funcionales y no funcionales tal como están implementados en el código de esta versión (la SPA de `src/`, las Cloud Functions de `functions/src/`, las reglas de Firestore, la configuración de Firebase Hosting y las pruebas). No recoge planes ni funciones futuras. Donde el README y el código no coinciden, manda el código.
+Este documento describe qué hace CLAR en la versión 1.3.2: sus requisitos funcionales y no funcionales tal como están implementados en el código de esta versión (la SPA de `src/`, las Cloud Functions de `functions/src/`, las reglas de Firestore, la configuración de Firebase Hosting y las pruebas). No recoge planes ni funciones futuras. Donde el README y el código no coinciden, manda el código.
 
 **Convenciones.** RF: requisito funcional. RNF: requisito no funcional. Los identificadores son estables: un requisito nuevo toma el siguiente número libre de su sección y uno retirado no se reutiliza. Los textos entre «» son etiquetas de la interfaz. «Origen» señala los archivos principales de cada sección.
 
@@ -238,7 +238,7 @@ Origen: `src/components/HomeView.tsx`, `src/services/stats.ts`.
 
 ### 1.9 Navegación y ayuda (RF-NAV)
 
-Origen: `src/navigation.ts`, `src/components/Navbar.tsx`, `src/components/BottomNav.tsx`, `src/components/MoreSheet.tsx`, `src/components/SyncIndicator.tsx`, `src/components/HowItWorks.tsx`, `src/components/ReleaseNotes.tsx`, `src/services/releaseNotes.ts`, `src/services/celebrations.ts`, `src/components/CelebrationBurst.tsx`.
+Origen: `src/navigation.ts`, `src/components/Navbar.tsx`, `src/components/BottomNav.tsx`, `src/components/MoreSheet.tsx`, `src/components/SyncIndicator.tsx`, `src/components/HowItWorks.tsx`, `src/components/ReleaseNotes.tsx`, `src/services/releaseNotes.ts`, `src/services/celebrations.ts`, `src/components/CelebrationBurst.tsx`, `src/services/appUpdate.ts`, `src/hooks/useAppUpdate.ts`, `src/components/UpdateBanner.tsx`, `vite-plugins/versionFile.ts`.
 
 - **RF-NAV-01.** Las secciones son Inicio, Listas, Agenda, Rueda de la Vida, Metas, Proyectos y Ayuda. Administración solo aparece para la persona administradora, delante de Ayuda.
 - **RF-NAV-02.** Desde 768 px de ancho, la cabecera lleva las secciones, las dos listas, el indicador de sincronización y la cuenta. «Nueva tarea» va debajo de la cabecera.
@@ -256,6 +256,7 @@ Origen: `src/navigation.ts`, `src/components/Navbar.tsx`, `src/components/Bottom
 - **RF-NAV-14.** Una dirección que no es la de la app ni la de un texto legal muestra «Página no encontrada», con «Ir a CLAR» y los textos legales. `robots.txt` deja indexar la portada y los textos legales.
 - **RF-NAV-15.** Celebraciones: al marcar como hecha, desde un estado abierto, una tarea creada hace 14 días o más (14 × 24 h; las recurrentes no cuentan, cada repetición es nueva), al lograr una meta activa o al terminar un proyecto activo, el aviso añade debajo un mensaje motivador y sale un confeti breve (unos 2 s) en los colores de la marca. El mensaje se elige al azar entre al menos 12 de cada tipo, sin repetir el último de su tipo; los de las tareas pueden decir cuántos días llevaba en la lista. Solo se celebra lo que se hace en esa pestaña, una vez por tarea, meta o proyecto y sesión (hacerla, deshacer y volver a hacerla no lo repite); nunca al cancelar, eliminar, archivar, reactivar, deshacer o importar, ni por cambios de otras pestañas o dispositivos. «Deshacer» sigue en el aviso y quita el confeti. El confeti es decorativo (oculto a los lectores de pantalla, no recibe el puntero) y con menos movimiento no se ve; el mensaje, sí. Se desactivan en el panel «Accesibilidad», en cada dispositivo (activadas por defecto).
 - **RF-NAV-16.** «Ayuda» tiene el apartado «Recomendaciones para proteger tu tiempo», solo con consejos, sin botones ni referencias a pantallas: el «triángulo de las Bermudas» del tiempo (las reuniones, el correo y los mensajes); las mañanas libres de reuniones para el trabajo concentrado (por ejemplo, ninguna antes de las 12:00) y las reuniones a primera hora de la tarde; cada reunión con hora de fin, un orden del día cerrado y alguien que la modere; los correos empezando por el contenido y los adjuntos, con los destinatarios al final; y el correo y los mensajes en bloques, a horas fijas.
+- **RF-NAV-17.** Con la app abierta, si se publica una versión nueva, sale el aviso «Hay una versión nueva de CLAR.» con «Actualizar» (vuelve a cargar la app en la versión nueva, sin cerrarla) y «Más tarde» (lo oculta hasta que se publique otra). La app lo comprueba cada 30 minutos con la app a la vista, y al volver a ella o al recuperar la conexión (como mucho, una vez cada 5 minutos); no recarga sola. Con un formulario u otra ventana de la app abierta, el aviso espera a que se cierre. Solo cuenta como versión nueva un cambio en el código de la app (un despliegue sin cambios no avisa). En «Tu cuenta», debajo del idioma, se ven la versión en uso y «Buscar actualizaciones», que dice si hay una nueva (con «Actualizar ahora»), si ya es la última o si no se pudo comprobar. La versión publicada está en `/version.json`, que Hosting sirve sin caché y el service worker no guarda.
 
 ### 1.10 Cuentas y acceso (RF-CUE)
 
