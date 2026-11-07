@@ -261,6 +261,13 @@ La lista completa y numerada de lo que hace la app, con sus requisitos no funcio
 - **Arreglo:** en un navegador nuevo (sin caché), lo que la app guarda al entrar (`saveUserProfile`) llegaba al perfil como «del servidor» antes que el resto. La app volvía a mostrar la bienvenida y, como la cuenta parecía no tener idioma, guardaba el del navegador encima del suyo. `subscribeToProfile` da el perfil por confirmado cuando llega del servidor sin escrituras propias pendientes, y desde entonces sigue así.
 - **Idioma de la cuenta:** los 5 s para adoptarlo recargando la app cuentan desde que se abre con la sesión iniciada (`useAccountLanguage`), no desde que se carga la página: el tiempo en la página de entrada ya no cuenta.
 
+### Aviso de versión nueva (1.3.2)
+
+- **Versión publicada:** cada compilación publica en `/version.json` (`vite-plugins/versionFile.ts`) la versión y su trozo de entrada, cuyo nombre lleva el hash del contenido: solo cambia si cambia el código, no en cada despliegue (un cambio solo de documentación no avisa). Hosting lo sirve sin caché y el service worker no lo guarda (`precache.ts`). La app se compara con el trozo con el que se cargó (`loadedBuild`).
+- **Con la app abierta:** `useAppUpdate` pide `/version.json` cada 30 minutos con la app a la vista, y al volver a ella (`visibilitychange` o `focus`) o al recuperar la conexión, como mucho una vez cada 5 minutos (una comprobación fallida no cuenta). Si el trozo no es el suyo, sale el aviso `UpdateBanner`, debajo de la cabecera y anunciado por una región viva, con «Actualizar» (recarga: la página se pide primero a la red) y «Más tarde» (lo oculta hasta que se publique otra). Si se vuelve a publicar la que se usa, el aviso se va. Con un formulario u otra ventana de la app abierta, el aviso espera. No se compara con el service worker: al recargar, la página ya es la nueva antes de que él se actualice, y avisaría de una versión que ya se ve.
+- **A mano:** en «Tu cuenta», debajo del idioma, la versión en uso y «Buscar actualizaciones» (`UpdateCheck`, en `AccountMenu`).
+- **Dependencias:** `body-parser` 2.4.0, `nodemailer` 10.1.4 y `qs` 6.17.1 en las Functions, y `@grpc/grpc-js` 1.14 para `@firebase/firestore` (#82, #83, #84).
+
 ---
 
 ## 🛠️ Stack Tecnológico

@@ -24,6 +24,42 @@ const released = (year: number, month: number) => monthFormat.format(Date.UTC(ye
 
 export const RELEASE_NOTES: readonly ReleaseNote[] = [
   {
+    version: '1.3.2',
+    month: released(2026, 11),
+    changes: [
+      messages(
+        {
+          title: 'Aviso de versión nueva',
+          text: 'Si CLAR está abierta cuando sale una versión nueva, te lo dice con un aviso: pulsa «Actualizar» para pasar a ella sin cerrar la app, o «Más tarde» para seguir con lo que hacías. Si tienes un formulario abierto, el aviso espera a que lo cierres.'
+        },
+        {
+          title: 'New version notice',
+          text: 'If CLAR is open when a new version comes out, a notice tells you: press “Update” to switch to it without closing the app, or “Later” to carry on with what you were doing. If you have a form open, the notice waits until you close it.'
+        }
+      ),
+      messages(
+        {
+          title: 'Buscar actualizaciones',
+          text: 'En «Tu cuenta», debajo del idioma, puedes ver qué versión usas y buscar una nueva cuando quieras.'
+        },
+        {
+          title: 'Check for updates',
+          text: "In “Your account”, below the language, you can see which version you're using and check for a new one whenever you like."
+        }
+      ),
+      messages(
+        {
+          title: 'Mantenimiento',
+          text: 'Componentes del servidor actualizados, con sus arreglos de seguridad.'
+        },
+        {
+          title: 'Maintenance',
+          text: 'Server components updated, with their security fixes.'
+        }
+      )
+    ]
+  },
+  {
     version: '1.3.1',
     month: released(2026, 11),
     changes: [

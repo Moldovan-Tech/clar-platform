@@ -26,6 +26,8 @@ import type { ExtraFeature, FeatureId } from '../services/features';
 import { CalendarConnection, type CalendarConnectionProps } from './CalendarConnection';
 import { ShareAppButton } from './ShareApp';
 import { LanguageSelector } from './LanguageSelector';
+import { UpdateCheck } from './UpdateCheck';
+import type { UpdateCheck as UpdateCheckResult } from '../hooks/useAppUpdate';
 import { messages } from '../i18n/locale';
 
 const m = messages(
@@ -192,6 +194,9 @@ interface AccountMenuProps {
   onSignOutEverywhere: () => Promise<void>;
   onOpenAccessibility: () => void;
   onContact: () => void;
+  // Buscar a mano una versión nueva y pasar a ella (useAppUpdate, src/services/appUpdate.ts)
+  onCheckUpdates: () => Promise<UpdateCheckResult>;
+  onApplyUpdate: () => void;
   // Adónde vuelve el foco si el botón que abrió el menú ya no está (p. ej. la hoja «Más» del móvil)
   returnFocusTo?: () => HTMLElement | null;
 }
@@ -223,6 +228,8 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
   onSignOutEverywhere,
   onOpenAccessibility,
   onContact,
+  onCheckUpdates,
+  onApplyUpdate,
   returnFocusTo
 }) => {
   const [busy, setBusy] = useState<Busy>(null);
@@ -368,6 +375,7 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
               <span className="text-xs font-bold text-slate-700">{m.language}</span>
               <LanguageSelector />
             </div>
+            <UpdateCheck onCheck={onCheckUpdates} onUpdate={onApplyUpdate} />
             <button type="button" onClick={onOpenAccessibility} disabled={busy !== null} className={actionClass}>
               <Accessibility className="h-4 w-4 text-indigo-600" aria-hidden="true" />
               {m.accessibility}

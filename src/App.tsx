@@ -67,6 +67,9 @@ import { FeedbackDialog } from './components/FeedbackDialog';
 import { AlarmAlerts, type AlarmAlert } from './components/AlarmAlerts';
 import { useTaskAlarms } from './hooks/useTaskAlarms';
 import { useAccountLanguage } from './hooks/useAccountLanguage';
+import { useAppUpdate } from './hooks/useAppUpdate';
+import { applyUpdate } from './services/appUpdate';
+import { UpdateBanner } from './components/UpdateBanner';
 import { alarmLateNote, alarmSetAtFor, formatClock } from './services/alarms';
 import {
   NOTIFICATIONS_GRANTED_EVENT,
@@ -1074,6 +1077,8 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
   const [welcomeClosed, setWelcomeClosed] = useState(false);
   // IDIOMA: el de la cuenta y el de este dispositivo, al abrir (src/i18n/locale.ts)
   useAccountLanguage(db, uid, profileOnboarding.record?.language, profileOnboarding.fromServer);
+  // VERSIÓN NUEVA con la ventana abierta: aviso para recargar y comprobación a mano en «Tu cuenta» (useAppUpdate)
+  const appUpdate = useAppUpdate();
   useEffect(
     () =>
       subscribeToProfile(
@@ -1665,8 +1670,11 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
         />
 
         {/* BANNER TOAST DE NOTIFICACIÓN: región viva siempre presente para que los lectores de pantalla lo anuncien. Una
-          celebración va en una línea aparte, después del aviso de siempre */}
+          celebración va en una línea aparte, después del aviso de siempre. En la misma región, el aviso de VERSIÓN
+          NUEVA: como los avisos, espera a que se cierre la ventana abierta (y no invita a recargar con un formulario a
+          medias) */}
         <div role="status" aria-live="polite">
+          {appUpdate.showBanner && !isDialogOpen && <UpdateBanner onUpdate={applyUpdate} onLater={appUpdate.dismiss} />}
           {toast && (
             <div className="animate-in slide-in-from-bottom-3 fixed right-[calc(1rem+env(safe-area-inset-right))] bottom-[calc(9.5rem+env(safe-area-inset-bottom))] left-[calc(1rem+env(safe-area-inset-left))] z-50 flex items-center gap-2.5 rounded-2xl bg-slate-900 px-4 py-3 text-xs text-white shadow-xl duration-200 md:right-6 md:bottom-6 md:left-auto md:max-w-md">
               {toast.celebration ? (
@@ -1780,6 +1788,8 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
           onChangePassword={(currentPassword, newPassword) => changePassword(user, currentPassword, newPassword)}
           onSignOutEverywhere={() => signOutEverywhere(services)}
           returnFocusTo={accountButton}
+          onCheckUpdates={appUpdate.checkNow}
+          onApplyUpdate={applyUpdate}
           onContact={() => {
             setIsAccountMenuOpen(false);
             setIsFeedbackOpen(true);
