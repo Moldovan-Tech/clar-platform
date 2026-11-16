@@ -49,7 +49,7 @@ test('Metas orders the areas by score, flags weak ones without goals, and a task
   await attention.getByRole('button', { name: 'Ponle una meta a Finanzas (3/10)' }).click();
   const editor = page.getByRole('dialog', { name: 'Nueva meta' });
   await expect(editor.getByLabel('Área de la Rueda')).toHaveValue('Finanzas');
-  await editor.getByLabel('Meta').fill(goalTitle);
+  await editor.getByLabel(/^Meta/).fill(goalTitle);
   await editor.getByRole('button', { name: 'Crear la meta' }).click();
   await expect(editor).toBeHidden();
   await expect(attention.getByRole('button')).toHaveText(['Ponle una meta a Ocio (5/10)']);
@@ -112,7 +112,7 @@ test('areas → goals → tasks: linking from the task form, achieving, changing
   const editor = page.getByRole('dialog', { name: 'Nueva meta' });
   await editor.getByRole('button', { name: 'Crear la meta' }).click();
   await expect(editor.getByRole('alert')).toHaveText('Ponle un nombre a la meta.');
-  await editor.getByLabel('Meta').fill(goalTitle);
+  await editor.getByLabel(/^Meta/).fill(goalTitle);
   await editor.getByLabel('Área de la Rueda').selectOption('Salud');
   await editor.getByLabel('¿Para qué?').fill('Llegar en forma a los 40');
   await editor.getByRole('button', { name: 'Crear la meta' }).click();
@@ -171,7 +171,7 @@ test('an impossible target date does not let the goal be saved', async ({ page }
   await openSection(page, 'Metas');
   await page.getByRole('button', { name: 'Nueva meta en Ocio' }).click();
   const editor = page.getByRole('dialog', { name: 'Nueva meta' });
-  await editor.getByLabel('Meta').fill('Viajar a Japón');
+  await editor.getByLabel(/^Meta/).fill('Viajar a Japón');
   await expect(editor.getByLabel('Área de la Rueda')).toHaveValue('Ocio');
   const date = editor.getByLabel('Fecha objetivo', { exact: true });
   await date.fill('31/02/2027');

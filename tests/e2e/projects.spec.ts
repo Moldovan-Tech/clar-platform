@@ -5,7 +5,7 @@ const createGoal = async (page: Page, title: string) => {
   await openSection(page, 'Metas');
   await page.getByRole('button', { name: 'Nueva meta en Familia' }).click();
   const editor = page.getByRole('dialog', { name: 'Nueva meta' });
-  await editor.getByLabel('Meta').fill(title);
+  await editor.getByLabel(/^Meta/).fill(title);
   await editor.getByRole('button', { name: 'Crear la meta' }).click();
   await expect(editor).toBeHidden();
 };
@@ -27,8 +27,8 @@ test('a project of a goal holds its tasks, shows its progress as a battery and w
   await openSection(page, 'Proyectos');
   await page.getByRole('button', { name: 'Nuevo proyecto' }).click();
   const editor = page.getByRole('dialog', { name: 'Nuevo proyecto' });
-  await editor.getByLabel('Proyecto').fill(projectTitle);
-  await editor.getByLabel('Meta').selectOption({ label: goalTitle });
+  await editor.getByLabel(/^Proyecto/).fill(projectTitle);
+  await editor.getByLabel(/^Meta/).selectOption({ label: goalTitle });
   await editor.getByLabel('Fecha de fin', { exact: true }).fill(localDateFromToday(30));
   await editor.getByRole('button', { name: 'Crear el proyecto' }).click();
   await expect(editor).toBeHidden();

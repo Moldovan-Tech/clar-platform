@@ -24,6 +24,32 @@ const released = (year: number, month: number) => monthFormat.format(Date.UTC(ye
 
 export const RELEASE_NOTES: readonly ReleaseNote[] = [
   {
+    version: '1.4.0',
+    month: released(2026, 11),
+    changes: [
+      messages(
+        {
+          title: 'Tareas completas por voz',
+          text: 'Dicta la tarea con su plazo y su prioridad, por ejemplo «Llamar al taller antes del viernes a las 5 de la tarde con prioridad alta»: CLAR deja el título y rellena la fecha, la hora y la prioridad. Te dice lo que ha entendido, y con «Deshacer» vuelve todo al título.'
+        },
+        {
+          title: 'Whole tasks by voice',
+          text: 'Dictate the task with its deadline and priority, for example “Call the garage before Friday at 5 pm with high priority”: CLAR keeps the title and fills in the date, time and priority. It tells you what it understood, and “Undo” puts it all back in the title.'
+        }
+      ),
+      messages(
+        {
+          title: 'Metas y proyectos por voz',
+          text: 'El micrófono también está en las metas y los proyectos. Si dices «… antes del 1 de marzo» en el nombre, se rellena la fecha objetivo de la meta o la de fin del proyecto.'
+        },
+        {
+          title: 'Goals and projects by voice',
+          text: 'The microphone is now in goals and projects too. If you say “… by March 1st” in the name, it fills in the goal’s target date or the project’s end date.'
+        }
+      )
+    ]
+  },
+  {
     version: '1.3.2',
     month: released(2026, 11),
     changes: [

@@ -7,6 +7,8 @@ import { GOAL_TITLE_MAX, GOAL_WHY_MAX, validateGoal } from '../services/goals';
 import { useAreas } from '../hooks/useAreas';
 import { DateField } from './DateField';
 import { DiscardChangesPrompt } from './DiscardChangesPrompt';
+import { DictateButton, DictationUnderstood } from './DictateButton';
+import { useDictatedDate } from '../hooks/useDictatedDate';
 import { messages } from '../i18n/locale';
 
 interface GoalModalProps {
@@ -35,6 +37,9 @@ const m = messages(
     optional: '(opcional)',
     whyPlaceholder: 'Lo que te importa de conseguirla',
     targetDate: 'Fecha objetivo',
+    dictateGoal: 'Dictar la meta',
+    dictateWhy: 'Dictar el para qué',
+    understoodDate: (day: string) => `fecha objetivo: ${day}`,
     hasProjects: (n: number) =>
       `Tiene ${n === 1 ? 'un proyecto' : `${n} proyectos`}: para eliminarla, elimínalos o pásalos a otra meta antes.`,
     deleteNote: 'Sus tareas se quedan, sin meta.',
@@ -60,6 +65,9 @@ const m = messages(
     optional: '(optional)',
     whyPlaceholder: 'What matters to you about achieving it',
     targetDate: 'Target date',
+    dictateGoal: 'Dictate the goal',
+    dictateWhy: 'Dictate the why',
+    understoodDate: (day) => `target date: ${day}`,
     hasProjects: (n) =>
       n === 1
         ? 'It has a project: to delete the goal, delete the project or move it to another goal first.'
@@ -108,6 +116,9 @@ export const GoalModal: React.FC<GoalModalProps> = ({
   // Una fecha a medio escribir (o imposible) también es un cambio
   const [dateDraft, setDateDraft] = useState(false);
   const guard = useDiscardGuard(snapshot !== openedSnapshot || dateDraft, onClose);
+  // Dictado: el nombre puede llevar la fecha («… antes del 1 de marzo»); el para qué, solo texto
+  const dictated = useDictatedDate(setTitle, targetDate, setTargetDate, m.understoodDate);
+  const [typedWhy, setTypedWhy] = useState(0);
 
   const dialogRef = useRef<HTMLDivElement>(null);
   useModalFocus(true, dialogRef, guard.requestClose);
@@ -168,16 +179,30 @@ export const GoalModal: React.FC<GoalModalProps> = ({
             <label htmlFor="goal-title" className={labelClass}>
               {m.goal} <span className="text-red-600">*</span>
             </label>
-            <input
-              id="goal-title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              maxLength={GOAL_TITLE_MAX}
-              placeholder={m.titlePlaceholder}
-              className={inputClass}
-              data-autofocus
-            />
+            <div className="flex flex-wrap items-center gap-1">
+              <input
+                id="goal-title"
+                type="text"
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  dictated.onTyped();
+                }}
+                maxLength={GOAL_TITLE_MAX}
+                placeholder={m.titlePlaceholder}
+                className={`${inputClass} min-w-0 flex-1`}
+                data-autofocus
+              />
+              <DictateButton
+                label={m.dictateGoal}
+                value={title}
+                onChange={setTitle}
+                pause={guard.confirming}
+                typed={dictated.typed}
+                onFinal={dictated.onFinal}
+              />
+            </div>
+            <DictationUnderstood summary={dictated.summary} onUndo={dictated.undo} />
           </div>
 
           <div>
@@ -203,15 +228,27 @@ export const GoalModal: React.FC<GoalModalProps> = ({
             <label htmlFor="goal-why" className={labelClass}>
               {m.why} <span className="font-normal tracking-normal text-slate-500 normal-case">{m.optional}</span>
             </label>
-            <textarea
-              id="goal-why"
-              rows={2}
-              value={why}
-              onChange={(e) => setWhy(e.target.value)}
-              maxLength={GOAL_WHY_MAX}
-              placeholder={m.whyPlaceholder}
-              className={inputClass}
-            />
+            <div className="flex flex-wrap items-start gap-1">
+              <textarea
+                id="goal-why"
+                rows={2}
+                value={why}
+                onChange={(e) => {
+                  setWhy(e.target.value);
+                  setTypedWhy((n) => n + 1);
+                }}
+                maxLength={GOAL_WHY_MAX}
+                placeholder={m.whyPlaceholder}
+                className={`${inputClass} min-w-0 flex-1`}
+              />
+              <DictateButton
+                label={m.dictateWhy}
+                value={why}
+                onChange={setWhy}
+                pause={guard.confirming}
+                typed={typedWhy}
+              />
+            </div>
           </div>
 
           <div>
@@ -222,7 +259,7 @@ export const GoalModal: React.FC<GoalModalProps> = ({
             <DateField
               label={m.targetDate}
               value={targetDate}
-              onChange={setTargetDate}
+              onChange={dictated.onDateChanged}
               onDraftChange={setDateDraft}
               inputClassName={inputClass}
             />

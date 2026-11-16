@@ -76,6 +76,8 @@ const m = messages(
     titleHint: 'empieza por una acción concreta que puedas hacer ya (Llamar, Enviar, Reservar…).',
     titlePlaceholder: 'ej. Llamar al proveedor para acordar el plazo de entrega',
     dictateTask: 'Dictar la tarea',
+    voiceDue: (day: string, time?: string) => (time ? `vence el ${day} a las ${time}` : `vence el ${day}`),
+    voicePriority: (priority: string) => `prioridad ${priority.toLowerCase()}`,
     writeTask: 'Escribe la tarea.',
     tooLong: 'Supera el límite de 100 caracteres recomendado para legibilidad.',
     missingVerb: 'Falta un verbo transitivo de acción física motora.',
@@ -216,6 +218,8 @@ const m = messages(
     titleHint: 'start with a concrete action you can do right away (Call, Send, Book…).',
     titlePlaceholder: 'e.g. Call the supplier to agree on the delivery date',
     dictateTask: 'Dictate the task',
+    voiceDue: (day, time) => (time ? `due ${day} at ${time}` : `due ${day}`),
+    voicePriority: (priority) => `${priority.toLowerCase()} priority`,
     writeTask: 'Write the task.',
     tooLong: 'It goes over the 100-character limit recommended for readability.',
     missingVerb: 'It needs an action verb.',
@@ -347,7 +351,8 @@ import { DiscardChangesPrompt } from './DiscardChangesPrompt';
 import { TimeField } from './TimeField';
 import { NewGoalInline } from './NewGoalInline';
 import { alarmError, alarmUnavailableReason, describeAlarm } from '../services/alarms';
-import { DictateButton } from './DictateButton';
+import { DictateButton, DictationUnderstood } from './DictateButton';
+import { parseDictatedTask, type DictatedFields } from '../services/voiceTask';
 import { suggestGoal } from '../services/goals';
 import { areasInUse } from '../services/wheel';
 import { useAreas } from '../hooks/useAreas';
@@ -486,6 +491,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   // Cuántas veces se ha escrito a mano en el título y en la nota: el micrófono deja de dictar al escribir (DictateButton)
   const [typedTitle, setTypedTitle] = useState(0);
   const [typedNote, setTypedNote] = useState(0);
+  // Lo que se entendió del último dictado del título (plazo y prioridad) y cómo estaba el formulario antes, para «Deshacer»
+  const [voiceParsed, setVoiceParsed] = useState<{
+    fields: DictatedFields;
+    previous: { title: string; dueDate: string; dueTime: string; priority: TaskPriority };
+  } | null>(null);
   // Áreas de la Rueda de la cuenta (con su nombre y las que se pueden elegir)
   const { areas: wheelAreas, label: areaName, selectable: selectableAreas } = useAreas();
   const [projectId, setProjectId] = useState('');
@@ -558,6 +568,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     setNlpLoading(false);
     const form = initialForm;
     setTitle(form.title);
+    setVoiceParsed(null);
     setProjectId(form.projectId);
     setGoalId(form.goalId);
     setDependsOn(form.dependsOn);
@@ -784,6 +795,40 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   // fecha límite es la última fecha posible (la «fecha hasta» de la serie: un solo valor). Cada repetición vence
   // su propio día, con la hora límite; ninguna se pinta como un intervalo.
   const isRepeating = Boolean(repeatFrequency);
+  // TAREA DICTADA: «<título> antes del <día> a las <hora> con prioridad <prioridad>» rellena el plazo y la prioridad
+  // (voiceTask.ts). En una tarea que se repite, la fecha límite es el fin de la serie: ahí solo se toma la prioridad
+  const applyDictatedTitle = (dictated: string, before: string) => {
+    const parsed = parseDictatedTask(dictated, toDateString(new Date()), { due: !isRepeating });
+    const fields: DictatedFields = { priority: parsed.priority, dueDate: parsed.dueDate, dueTime: parsed.dueTime };
+    if (!fields.priority && !fields.dueDate) return;
+    setVoiceParsed({
+      fields,
+      previous: { title: before ? `${before} ${dictated}` : dictated, dueDate, dueTime, priority }
+    });
+    setTitle(before ? `${before} ${parsed.title}` : parsed.title);
+    if (fields.dueDate) {
+      setDueDate(fields.dueDate);
+      setDueTime(fields.dueTime ?? '');
+    }
+    if (fields.priority) setPriority(fields.priority);
+  };
+  const undoDictatedTitle = () => {
+    if (!voiceParsed) return;
+    const { previous } = voiceParsed;
+    setTitle(previous.title);
+    setDueDate(previous.dueDate);
+    setDueTime(previous.dueTime);
+    setPriority(previous.priority);
+    setVoiceParsed(null);
+  };
+  const voiceSummary = voiceParsed
+    ? [
+        voiceParsed.fields.dueDate && m.voiceDue(formatDay(voiceParsed.fields.dueDate), voiceParsed.fields.dueTime),
+        voiceParsed.fields.priority && m.voicePriority(PRIORITY_LABEL[voiceParsed.fields.priority])
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : '';
   const seriesStart = startDate || toDateString(new Date());
   const anchor = toLocalDate(seriesStart);
   // Los anclajes de la regla (día del mes, N.º día de la semana) salen del inicio de la serie. Al editar una
@@ -1014,6 +1059,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   setTitle(e.target.value);
                   setOverrideSyntaxWarning(false);
                   setTypedTitle((n) => n + 1);
+                  setVoiceParsed(null);
                 }}
                 onBlur={() => setTouched({ ...touched, title: true })}
                 placeholder={m.titlePlaceholder}
@@ -1035,8 +1081,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 autoStart={autoDictate && !editingTask}
                 pause={guard.confirming}
                 typed={typedTitle}
+                onFinal={applyDictatedTitle}
               />
             </div>
+            {/* Lo que se entendió del dictado (plazo y prioridad), con «Deshacer» */}
+            <DictationUnderstood summary={voiceSummary} onUndo={undoDictatedTitle} />
             {/* Debajo del campo y no encima: con títulos largos o texto ampliado taparía lo escrito */}
             {syntaxResult.isValid && syntaxResult.detectedVerb && (
               <p className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
@@ -1215,7 +1264,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               <DateField
                 label={m.dueDate}
                 value={dueDate}
-                onChange={setDueDate}
+                onChange={(value) => {
+                  setDueDate(value);
+                  // Cambiado a mano: «Deshacer» ya no lo pisaría
+                  setVoiceParsed(null);
+                }}
                 onDraftChange={draftOf('dueDate')}
                 className="min-w-0 flex-1"
                 inputClassName="px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400"
@@ -1223,7 +1276,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               <TimeField
                 label={m.dueTime}
                 value={dueTime}
-                onChange={setDueTime}
+                onChange={(value) => {
+                  setDueTime(value);
+                  setVoiceParsed(null);
+                }}
                 onDraftChange={draftOf('dueTime')}
                 disabled={!dueDate && !isRepeating}
                 className="w-24 rounded-lg border border-slate-300 px-2 py-1.5 text-xs focus:ring-2 focus:ring-indigo-400 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"
@@ -1296,7 +1352,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             <select
               id="task-priority"
               value={priority}
-              onChange={(e) => setPriority(e.target.value as TaskPriority)}
+              onChange={(e) => {
+                setPriority(e.target.value as TaskPriority);
+                setVoiceParsed(null);
+              }}
               className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-indigo-400 focus:outline-none"
             >
               <option value="CRITICAL">🔥 {PRIORITY_LABEL.CRITICAL}</option>
