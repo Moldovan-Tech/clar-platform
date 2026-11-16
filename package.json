@@ -2,10 +2,10 @@
   "name": "clar",
   "description": "CLAR: decide qué hacer ahora, con claridad. Rueda de la Vida, metas, proyectos y tareas con Top 10 y agenda.",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.4.1",
   "type": "module",
   "engines": {
-    "node": ">=22.12"
+    "node": ">=22.13"
   },
   "scripts": {
     "dev": "npm --prefix functions run build && firebase emulators:exec --only auth,firestore,functions --project demo-neuroproductivity \"npm run dev:app\"",
@@ -45,7 +45,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "esbuild": "^0.28.2",
-    "firebase-tools": "15.33.0",
+    "firebase-tools": "15.36.0",
     "lint-staged": "16.4.0",
     "prettier": "3.9.10",
     "prettier-plugin-tailwindcss": "0.8.1",
