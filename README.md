@@ -136,7 +136,7 @@ La lista completa y numerada de lo que hace la app, con sus requisitos no funcio
 - **Filtro contra Proyectos Amorfos:** Intercepta descriptores abstractos como _"Marketing"_, _"Coche"_ o _"Finanzas"_.
 - **Asistente:** pregunta «¿Cuál es el primer paso? Conviértelo en algo que puedas hacer ya.» y propone una acción concreta (por ejemplo «Llamar al taller para pedir presupuesto»), con un verbo de acción física.
 
-### 6. Proteger el tiempo: el triángulo de las Bermudas
+### 6. Proteger el tiempo: recomendaciones de la Ayuda
 
 - **Recomendaciones, no herramientas:** desde la 1.3.0, la Ayuda tiene «Recomendaciones para proteger tu tiempo» contra las tres grandes fugas (reuniones, correo y mensajes): mañanas libres de reuniones para el trabajo concentrado (ninguna antes de las 12:00) y reuniones a primera hora de la tarde; cada reunión con hora de fin, orden del día cerrado y alguien que la modere; los correos empezando por el contenido y los adjuntos, con los destinatarios al final; y el correo y los mensajes en bloques, a horas fijas.
 - **Lo guardado antes se conserva:** la sección «Tiempo protegido» (reuniones y correos) se retiró en la 1.3.0. Las reuniones y los correos que se guardaron con ella siguen en la cuenta, sin pantalla: van en «Descargar mis datos», la importación los trae y se borran con la cuenta (ver [la 1.3.0](#tiempo-protegido-a-la-ayuda-130)).
@@ -253,7 +253,7 @@ La lista completa y numerada de lo que hace la app, con sus requisitos no funcio
 ### «Tiempo protegido», a la Ayuda (1.3.0)
 
 - **Sección retirada:** sin la pestaña `bermudas` ni `BermudasShield`, `MeetingModal`, `EmailModal` y `src/services/email.ts`. Inicio ya no cuenta las reuniones y la Agenda no las muestra; la bienvenida y la página de entrada ya no presentan la sección.
-- **Recomendaciones en la Ayuda:** «Recomendaciones para proteger tu tiempo» / “Tips to protect your time” (`HowItWorks`), solo consejos, sin botones ni referencias a pantallas (ver [Proteger el tiempo](#6-proteger-el-tiempo-el-triángulo-de-las-bermudas)).
+- **Recomendaciones en la Ayuda:** «Recomendaciones para proteger tu tiempo» / “Tips to protect your time” (`HowItWorks`), solo consejos, sin botones ni referencias a pantallas (ver [Proteger el tiempo](#6-proteger-el-tiempo-recomendaciones-de-la-ayuda)).
 - **Los datos se conservan:** `users/{uid}/meetings` y `users/{uid}/emails` ya no se siguen en vivo (`LIVE_COLLECTIONS`, que también decide el indicador de sincronización), pero siguen en `USER_COLLECTIONS`: van en «Descargar mis datos», la importación los trae y se borran con la cuenta. Las reglas los siguen admitiendo para la importación. La política de privacidad lo explica (versión del 1 de noviembre de 2026).
 
 ### Otro navegador, la misma cuenta (1.3.1)
@@ -286,7 +286,7 @@ La lista completa y numerada de lo que hace la app, con sus requisitos no funcio
 
 ### Prerrequisitos
 
-- Node.js $\ge 22.12$
+- Node.js $\ge 22.12$ (`engines` en `package.json`; la CI y las Functions usan Node 22)
 - npm (el gestor utilizado por CI y el despliegue)
 - Java 21 o superior para el emulador de Firestore (desarrollo local y pruebas)
 - La Firebase CLI se instala con `npm ci` (`firebase-tools` en `devDependencies`); `npx firebase …` usa esa versión
@@ -498,16 +498,24 @@ El repositorio utiliza `package-lock.json` (en la raíz, en `functions/` y en `t
 ## 📂 Estructura del Proyecto
 
 ```text
-├── docs/requisitos.md           # Requisitos funcionales y no funcionales de la versión actual
+├── docs/
+│   ├── requisitos.md            # Requisitos funcionales y no funcionales de la versión actual
+│   └── screenshots/             # Capturas del README
 ├── index.html                   # Entrada HTML (lang="es")
 ├── LICENSE                      # Licencia MIT
 ├── package.json                 # Dependencias y scripts
 ├── vite.config.ts               # Configuración de Vite y Tailwind
+├── vite-plugins/
+│   ├── precache.ts              # Lista de lo que guarda el service worker para abrir sin conexión
+│   └── versionFile.ts           # /version.json: la versión publicada, para avisar de una nueva
+├── .env.example                 # Variables de compilación (clave VAPID, cliente OAuth de Google Calendar y emuladores)
+├── SECURITY.md                  # Cómo informar de un fallo de seguridad
 ├── tsconfig.json                # Configuración de TypeScript estricto
 ├── playwright.config.ts         # Pruebas E2E (proyectos warm-up, chromium y global-settings)
 ├── firebase.json                # Firebase Hosting (rewrites y caché), Cloud Functions, Firestore y emuladores
 ├── firestore.rules              # Reglas: users/{uid} (crear y modificar exige acceso aprobado), access, admins,
-│                                #   settings y feedback_tickets (solo la administración, y solo su estado)
+│                                #   features y calendar_status (solo lectura), settings y feedback_tickets
+│                                #   (solo la administración, y solo su estado)
 ├── public/                      # Manifiesto, iconos, pantalla de inicio, sw.js (service worker: sin conexión y notificaciones) y
 │                                #   oauth/ (vuelta de la autorización de Google Calendar)
 ├── tools/eslint/                # ESLint con su propio TypeScript 5.9
@@ -518,6 +526,8 @@ El repositorio utiliza `package-lock.json` (en la raíz, en `functions/` y en `t
 │   │   │                        #   y las de las alarmas push
 │   │   ├── app.ts               # Función HTTP `api`: solo /.well-known/assetlinks.json (APK Android)
 │   │   ├── adminApp.ts          # Firebase Admin compartido
+│   │   ├── globalOptions.ts     # Opciones de todas las funciones (tope de 5 instancias)
+│   │   ├── callable.ts · i18n.ts # Funciones invocables con los errores en el idioma de quien llama (es/en)
 │   │   ├── access.ts            # syncAccess, requestAccess, setAccess, setAccessMode, forgetAccess, revokeSessions
 │   │   │                        #   y avisos por email (SMTP)
 │   │   ├── accessLogic.ts       # Reglas puras del acceso (estados, esperas, modo de aprobación, correos)
@@ -548,7 +558,9 @@ El repositorio utiliza `package-lock.json` (en la raíz, en `functions/` y en `t
 │   ├── tourSteps.ts             # Pasos del recorrido guiado
 │   ├── lazy.tsx                 # Carga bajo demanda con reintento
 │   ├── index.css                # Tailwind CSS y estilos de accesibilidad (texto, contraste, movimiento, foco)
-│   ├── types/index.ts           # Modelos de datos (TaskItem, Goal, Project, WheelArea, WheelOfLifeLog, EmailDraft…)
+│   ├── types/index.ts           # Modelos de datos (TaskItem, TaskDraft, Goal, Project, WheelArea, WheelOfLifeLog…;
+│   │                            #   MeetingGuard y EmailDraft solo para los datos de antes de la 1.3.0)
+│   ├── i18n/locale.ts           # Idioma de la app (es/en), `messages(es, en)` y LOCALE_TAG
 │   ├── env.d.ts                 # Tipos de Vite y la versión de la app (__APP_VERSION__)
 │   ├── hooks/
 │   │   ├── useModalFocus.ts     # Foco de los diálogos: entra, se queda dentro y vuelve al cerrar
@@ -557,6 +569,8 @@ El repositorio utiliza `package-lock.json` (en la raíz, en `functions/` y en `t
 │   │   ├── useMediaQuery.ts     # Tamaño de pantalla (móvil o no)
 │   │   ├── useNow.ts            # Reloj por minutos para plazos y prioridad efectiva
 │   │   ├── useReauthMethods.ts  # Cómo confirmar con un inicio de sesión reciente (el método de esta sesión primero)
+│   │   ├── useAccountLanguage.ts # Idioma guardado en la cuenta, al abrir con el perfil confirmado
+│   │   ├── useAppUpdate.ts      # Comprobar si hay versión nueva con la app abierta
 │   │   └── useTaskAlarms.ts     # Alarmas de las tareas mientras la app está abierta
 │   ├── services/
 │   │   ├── firebase.ts          # Firebase (Auth, Firestore con caché sin conexión, Functions) y sincronización forzada
@@ -566,6 +580,9 @@ El repositorio utiliza `package-lock.json` (en la raíz, en `functions/` y en `t
 │   │   ├── features.ts          # Funciones extra: catálogo, las de la cuenta y las de todas (administración)
 │   │   ├── googleCalendar.ts    # Conectar Google Calendar (ventana de Google con PKCE) y estado de la conexión
 │   │   ├── releaseNotes.ts      # Novedades de cada versión y cuándo se muestran
+│   │   ├── appUpdate.ts         # Versión nueva: compara /version.json con la cargada
+│   │   ├── platform.ts          # Dispositivo y modo (iPhone, app instalada, APK) para avisos e inicio de sesión
+│   │   ├── speech.ts            # Dictado por voz (Web Speech API)
 │   │   ├── auth.ts              # Email y contraseña: alta con verificación, acceso, recuperación y cambio
 │   │   ├── account.ts           # Descarga de los datos, eliminación de la cuenta y cierre de todas las sesiones
 │   │   ├── importData.ts        # Importar la descarga: validación campo a campo, qué entra y fusión de áreas
@@ -603,6 +620,8 @@ El repositorio utiliza `package-lock.json` (en la raíz, en `functions/` y en `t
 │       ├── DiscardChangesPrompt.tsx # «¿Descartar los cambios?»
 │       ├── TaskList.tsx · TaskCard.tsx · TaskActionsMenu.tsx # Top 10 y resto, tarjeta y menú «⋯»
 │       ├── TaskModal.tsx        # Captura con validación sintáctica, meta, sugerencias, fechas, alarma y repetición
+│       ├── DictateButton.tsx    # Micrófono para dictar el título y las notas
+│       ├── TaskDraftsModal.tsx  # «Borradores»: tareas nuevas cerradas sin guardar
 │       ├── DateField.tsx · TimeField.tsx · TaskDates.tsx · TaskStatusSelect.tsx · ArchivedTasksModal.tsx
 │       ├── AlarmAlerts.tsx · NotificationPermission.tsx # Avisos de alarma y permiso de notificaciones
 │       ├── AgendaView.tsx       # Agenda semanal y por días
@@ -611,6 +630,10 @@ El repositorio utiliza `package-lock.json` (en la raíz, en `functions/` y en `t
 │       ├── AdminView.tsx · AccessAdminView.tsx · FeedbackAdminView.tsx # Administración: solicitudes y mensajes
 │       ├── FeedbackDialog.tsx   # «Escríbenos»
 │       ├── AccountMenu.tsx · AccessibilityPanel.tsx · DeleteAccountPanel.tsx
+│       ├── LanguageSelector.tsx # «Español / English»
+│       ├── UpdateBanner.tsx · UpdateCheck.tsx # Aviso de versión nueva y «Buscar actualizaciones»
+│       ├── ShareApp.tsx         # Compartir CLAR (menú del dispositivo o copiar el enlace)
+│       ├── NotFoundPage.tsx     # «Página no encontrada»
 │       ├── CelebrationBurst.tsx # Confeti de las celebraciones
 │       ├── CalendarConnection.tsx # Conectar, estado y desconectar Google Calendar (en «Tu cuenta»)
 │       ├── ReleaseNotes.tsx     # Ventana «Novedades de la versión» y lista de cambios (también en la Ayuda)

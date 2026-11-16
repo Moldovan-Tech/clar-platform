@@ -1,7 +1,7 @@
 # Requisitos del sistema — CLAR
 
 - **Versión:** 1.3.2
-- **Última revisión:** 2026-11-05
+- **Última revisión:** 2026-11-13
 
 Este documento describe qué hace CLAR en la versión 1.3.2: sus requisitos funcionales y no funcionales tal como están implementados en el código de esta versión (la SPA de `src/`, las Cloud Functions de `functions/src/`, las reglas de Firestore, la configuración de Firebase Hosting y las pruebas). No recoge planes ni funciones futuras. Donde el README y el código no coinciden, manda el código.
 
@@ -103,14 +103,14 @@ Origen: `src/components/TaskList.tsx`, `src/components/TaskCard.tsx`, `src/compo
 
 **Formulario de la tarea**
 
-- **RF-TAR-14.** El título es obligatorio y admite hasta 100 caracteres, con contador. Encima del campo se pide empezar por una acción concreta (Llamar, Enviar, Reservar…).
+- **RF-TAR-14.** El título es obligatorio y admite hasta 100 caracteres, con contador: se puede escribir más, pero el formulario avisa y no deja guardar. Encima del campo se pide empezar por una acción concreta (Llamar, Enviar, Reservar…).
 - **RF-TAR-15.** El analizador de la acción siguiente revisa el título mientras se escribe. Ante un tema abstracto conocido (p. ej. «Marketing», «Coche» o «Finanzas») o una sola palabra sin verbo de acción, pregunta por el primer paso y propone una acción concreta.
 - **RF-TAR-16.** Mientras el aviso del analizador esté abierto, la tarea no se puede guardar. Se resuelve con «Usar sugerencia» o «Mantener redacción»; al editar una tarea ya guardada no bloquea.
 - **RF-TAR-17.** El formulario tiene dos niveles. A la vista: lista, título, proyecto, meta, fecha y hora límite, alarma y prioridad. En «Más opciones»: descripción, estimación, área, dependencia, inicio, repetición, «Algún día» y notas.
 - **RF-TAR-18.** Al salir del campo «Descripción», si la tarea no tiene meta, la app busca el área de la Rueda que más se parece al título y la descripción. Con una similitud del coseno de al menos 0,12 o alguna palabra clave en común, muestra «Sugerencia: ¿Vincular a «área»?» con su porcentaje de confianza y «Usar esta área».
 - **RF-TAR-19.** La sugerencia compara el texto con las áreas a la vista: las de partida, con su vocabulario propio (más las palabras de su nombre si se renombraron); las añadidas, con las palabras de su nombre. El cálculo se hace en el navegador.
 - **RF-TAR-20.** Con una meta elegida, el área es la de la meta y su selector se desactiva. Sin meta, el área se elige a mano o se acepta la sugerida, y el formulario dice cuál de las dos es.
-- **RF-TAR-21.** Las notas son textos cortos que se añaden con «Añadir» o Intro y se quitan una a una.
+- **RF-TAR-21.** Las notas son textos cortos que se añaden con «Añadir» o Intro y se quitan una a una. Además de las de texto, una nota puede ser un enlace (con su dirección) o un elemento de lista con su casilla; la app solo crea notas de texto, y los otros dos tipos llegan con la importación (RF-CUE-28) y se conservan.
 - **RF-TAR-22.** Cerrar el formulario de una tarea que ya existe con cambios sin guardar (una tarea nueva se guarda como borrador: RF-TAR-56) pregunta «¿Descartar los cambios?», con «Seguir editando» y «Descartar». Una fecha o una hora a medio escribir también cuenta como cambio.
 - **RF-TAR-23.** Cerrar o recargar la pestaña con el formulario cambiado hace que el navegador pida confirmación.
 
@@ -146,7 +146,7 @@ Origen: `src/components/TaskList.tsx`, `src/components/TaskCard.tsx`, `src/compo
 - **RF-TAR-45.** En los meses que no tienen el día elegido (p. ej. el 31), la repetición mensual cae el último día del mes.
 - **RF-TAR-46.** Al marcar una repetición como Hecha o Cancelada, se archiva y se crea la siguiente en la misma escritura. Cancelar una repetición no termina la serie.
 - **RF-TAR-47.** La siguiente repetición tiene un identificador derivado de la anterior, así que marcarla desde dos pestañas o dispositivos no la duplica. En fechas fijas, las repeticiones ya vencidas, hora límite incluida, se saltan. No se crea ninguna después del fin de la serie.
-- **RF-TAR-48.** La siguiente repetición empieza pendiente, sin fecha de inicio y sin esperar a ninguna tarea. Hereda la alarma.
+- **RF-TAR-48.** La siguiente repetición empieza pendiente, sin fecha de inicio y sin esperar a ninguna tarea. Hereda la alarma y las notas, con las casillas de las notas de lista desmarcadas.
 - **RF-TAR-49.** «Deshacer» sobre una repetición recién cerrada la restaura y borra la siguiente que se acababa de crear.
 
 **Calendario y descargas**
@@ -265,8 +265,8 @@ Origen: `src/AuthGate.tsx`, `src/AccessGate.tsx`, `src/services/auth.ts`, `src/s
 **Inicio de sesión y alta**
 
 - **RF-CUE-01.** La app solo muestra datos con una sesión iniciada. Se entra con Google o con email y contraseña.
-- **RF-CUE-02.** «Continuar con Google» abre una ventana para elegir la cuenta. Si el navegador bloquea la ventana o no la admite (p. ej. dentro de la APK), usa una redirección; en la app de la pantalla de inicio del iPhone, donde la ventana no devuelve el resultado, va siempre por redirección. Ahí, para eliminar una cuenta de Google hay que haber entrado en esa sesión hace menos de 4 minutos, según las horas del token del servidor; la pantalla de eliminar la cuenta lo explica antes.
-- **RF-CUE-03.** «Crear una cuenta» pide nombre (opcional), email, una contraseña de al menos 8 caracteres y marcar «Tengo 14 años o más… y acepto las condiciones de uso», y envía un email para confirmar la dirección. El perfil guarda cuándo se aceptaron las condiciones y su versión (también al entrar con Google, que acepta con el aviso de la pantalla de entrada). Los emails de la cuenta van en español.
+- **RF-CUE-02.** «Continuar con Google» abre una ventana para elegir la cuenta. Si el navegador bloquea la ventana o no la admite (p. ej. dentro de la APK), usa una redirección; en la app de la pantalla de inicio del iPhone, donde la ventana no devuelve el resultado, va siempre por redirección. Ahí, para eliminar una cuenta de Google hay que haber entrado en esa sesión hace menos de 4 minutos, según las horas del token del servidor (el servidor admite hasta 5, así un reloj algo desfasado no lo impide); la pantalla de eliminar la cuenta lo explica antes.
+- **RF-CUE-03.** «Crear una cuenta» pide nombre (opcional), email, una contraseña de al menos 8 caracteres y marcar «Tengo 14 años o más… y acepto las condiciones de uso», y envía un email para confirmar la dirección. El perfil guarda cuándo se aceptaron las condiciones y su versión (también al entrar con Google, que acepta con el aviso de la pantalla de entrada). Los emails de la cuenta van en el idioma de la app (RF-CUE-33).
 - **RF-CUE-04.** Una cuenta con contraseña tiene que confirmar su email antes de solicitar acceso. Su pantalla ofrece «Ya lo he confirmado», «Reenviar el email» y «Cerrar sesión».
 - **RF-CUE-05.** Al entrar, un email desconocido y una contraseña incorrecta dan el mismo mensaje: «Email o contraseña incorrectos.».
 - **RF-CUE-06.** «¿Olvidaste tu contraseña?» envía un enlace para crear otra. La respuesta es la misma tanto si el email tiene cuenta como si no.
@@ -288,7 +288,7 @@ Origen: `src/AuthGate.tsx`, `src/AccessGate.tsx`, `src/services/auth.ts`, `src/s
 - **RF-CUE-16.** Una cuenta con contraseña puede «Cambiar la contraseña» escribiendo la actual y una nueva de al menos 8 caracteres.
 - **RF-CUE-17.** «Cerrar sesión en todos los dispositivos» invalida las sesiones de la cuenta y cierra la de este dispositivo. Los demás pierden el acceso en menos de una hora.
 - **RF-CUE-18.** «Cerrar sesión» borra la copia local de los datos del dispositivo. Si hay otras pestañas de la app abiertas, la copia se queda hasta cerrar sesión con una sola.
-- **RF-CUE-19.** «Eliminar mi cuenta y todos mis datos» pide confirmarlo con el método con el que se entró en esta sesión: la contraseña o volver a entrar con Google. Una cuenta que tiene los dos puede cambiar al otro, y los errores de la ventana de Google (cerrada, otra cuenta, bloqueada) se explican en español. Borra los datos de la cuenta, su perfil, su solicitud de acceso, sus funciones extra, su conexión con Google Calendar y sus mensajes de «Escríbenos», y después la cuenta.
+- **RF-CUE-19.** «Eliminar mi cuenta y todos mis datos» pide confirmarlo con el método con el que se entró en esta sesión: la contraseña o volver a entrar con Google. Una cuenta que tiene los dos puede cambiar al otro, y los errores de la ventana de Google (cerrada, otra cuenta, bloqueada) se explican en el idioma de la app. Borra primero la cuenta y después sus datos, su perfil, su solicitud de acceso, sus funciones extra, sus mensajes de «Escríbenos», sus dispositivos registrados y sus alarmas pendientes (RF-ALA-13) y su marca de administración, si la tenía; la conexión con Google Calendar se retira al final.
 
 **Primera vez**
 
@@ -388,7 +388,7 @@ Origen: `firestore.rules`, `firebase.json`, `functions/src/access.ts`, `function
 
 - **RNF-SEG-01.** Las reglas de Firestore solo dejan a cada cuenta leer y escribir en `users/{uid}` y sus subcolecciones. Lo que no coincide con ninguna regla queda denegado.
 - **RNF-SEG-02.** Crear y modificar datos exige el acceso aprobado. Leer y borrar los propios datos se permite siempre, para que una cuenta sin acceso pueda llevárselos o eliminarlos.
-- **RNF-SEG-03.** Las subcolecciones permitidas son siete: tareas, borradores de tareas, evaluaciones, reuniones, correos, metas y proyectos. Las reuniones y los correos ya no los crea la app (1.7), pero se siguen admitiendo para que la importación los traiga. El perfil solo admite sus campos conocidos (datos de la cuenta, bienvenida, novedades vistas, áreas de la Rueda y funciones extra encendidas).
+- **RNF-SEG-03.** Las subcolecciones permitidas son siete: tareas, borradores de tareas, evaluaciones, reuniones, correos, metas y proyectos. Las reuniones y los correos ya no los crea la app (ver 1.7), pero se siguen admitiendo para que la importación los traiga. El perfil solo admite sus campos conocidos (datos de la cuenta, aceptación de las condiciones y su versión, idioma, bienvenida, novedades vistas, áreas de la Rueda y funciones extra encendidas).
 - **RNF-SEG-04.** Las solicitudes de acceso, las marcas de administración, la configuración, las funciones extra de cada cuenta, la lista negra y el contador de mensajes solo los escriben las Cloud Functions. Ningún cliente puede escribirlos, tampoco la persona administradora.
 - **RNF-SEG-05.** Cada cuenta lee solo su propia solicitud de acceso y sus funciones extra, y la persona administradora, todas. Nadie lee desde la app la lista negra ni el contador de mensajes.
 - **RNF-SEG-06.** Las reglas reconocen a la persona administradora solo si existe su marca y el email guardado en ella coincide con el del token de quien lee.
@@ -419,7 +419,7 @@ Origen: `functions/src/accessLogic.ts`, `functions/src/calendarCleanup.ts`, `fun
 - **RNF-PRI-08.** El Top 10, las sugerencias, las estadísticas y las recomendaciones se calculan en el navegador.
 - **RNF-PRI-09.** La app no carga fuentes externas: usa la tipografía del sistema. No incluye herramientas de analítica ni de seguimiento.
 - **RNF-PRI-10.** Las fotos de perfil se cargan sin enviar la página de origen (`referrerPolicy="no-referrer"`).
-- **RNF-PRI-11.** Al eliminar la cuenta se borran sus datos, su solicitud de acceso, sus funciones extra y sus mensajes. Solo se conservan el email, si estaba bloqueado (con el identificador interno de la cuenta y la fecha del bloqueo), y las horas de los envíos de la última hora, ligadas solo al identificador interno, para que el límite de mensajes siga aplicándose. Ese registro de envíos no se borra después.
+- **RNF-PRI-11.** Al eliminar la cuenta se borran sus datos, su solicitud de acceso, sus funciones extra, su conexión con Google Calendar, sus mensajes, sus dispositivos y alarmas push y su marca de administración. Solo se conservan el email, si estaba bloqueado (con el identificador interno de la cuenta y la fecha del bloqueo), y las horas de los envíos de la última hora, ligadas solo al identificador interno, para que el límite de mensajes siga aplicándose. Ese registro de envíos no se borra después.
 - **RNF-PRI-12.** Al cerrar sesión se borra la copia local de los datos (RF-CUE-18).
 - **RNF-PRI-13.** Cada cuenta puede descargar sus datos de la app en JSON en cualquier momento, también sin acceso aprobado (ver RF-CUE-15).
 - **RNF-PRI-14.** Las alarmas con CLAR cerrada son opcionales en cada dispositivo (consentimiento). Se guardan el token de cada dispositivo, su zona horaria y si quiere ver el nombre de la tarea y, de cada alarma pendiente, su hora, el nombre de la tarea y cuándo vence; de las enviadas, cuál fue. Por FCM y el servicio push del navegador solo viaja la hora de la alarma y cuándo vence, y el nombre de la tarea solo si el dispositivo lo pide. Los registros del servidor no llevan datos de la persona, solo recuentos y códigos de error.
@@ -448,7 +448,7 @@ Origen: `src/services/firebase.ts`, `src/services/repository.ts`, `src/lazy.tsx`
 - **RNF-OFF-01.** Firestore usa una caché persistente en el dispositivo, compartida entre pestañas. Con la app abierta, se puede leer y escribir sin conexión.
 - **RNF-OFF-02.** Las escrituras se aplican al momento en la copia local y se envían al servidor en segundo plano. Al volver la conexión, se sincronizan con el servidor y con los demás dispositivos y pestañas.
 - **RNF-OFF-03.** Los datos llegan en tiempo real: un cambio hecho en otro dispositivo aparece sin recargar.
-- **RNF-OFF-04.** Necesitan conexión: iniciar sesión, comprobar un acceso que aún no está en la caché, «Deshacer», las funciones del servidor (solicitar acceso, contacto y administración) eliminar la cuenta, importar datos (se comprueba en el servidor qué hay ya) y activar las alarmas con CLAR cerrada.
+- **RNF-OFF-04.** Necesitan conexión: iniciar sesión, comprobar un acceso que aún no está en la caché, «Deshacer», las funciones del servidor (solicitar acceso, contacto y administración), eliminar la cuenta, importar datos (se comprueba en el servidor qué hay ya) y activar las alarmas con CLAR cerrada.
 - **RNF-OFF-05.** La app se abre sin conexión, también la instalada en Android, una vez abierta con conexión en ese dispositivo. El service worker (`public/sw.js`), registrado al arrancar, guarda una copia de cada versión publicada: la app, todos sus trozos (también los de las secciones que no se han abierto), sus iconos y su configuración de Firebase. Las páginas se piden primero a la red (con 4 s de espera como mucho) y, sin conexión, sale la copia; los archivos de la app, de la copia. Al publicar una versión, la copia nueva sustituye a la anterior. En desarrollo no guarda nada. La configuración de Firebase también se guarda en el dispositivo; si no hay ninguna (la primera vez sin conexión), la app dice que necesita conexión. El service worker se sirve sin caché para que se actualice. Lo que pide la entrada con Google, otros sitios y las peticiones que no son de lectura van siempre a la red.
 - **RNF-OFF-06.** Si sin conexión falla la descarga de una parte de la app, la app no se recarga: sigue en pie con los datos y ofrece «Reintentar».
 - **RNF-OFF-07.** Los cambios simultáneos desde varios dispositivos no duplican ni pisan datos. La siguiente repetición tiene un identificador fijo, «Deshacer» comprueba en una transacción que nada cambió, y al eliminar una meta o un proyecto cada tarea se desvincula en su propia transacción, solo si sigue vinculada.
@@ -463,7 +463,7 @@ Origen: `src/App.tsx`, `src/Root.tsx`, `src/lazy.tsx`, `vite.config.ts`, `fireba
 - **RNF-REN-04.** Los cálculos (Top 10, estadísticas, sugerencias, agenda y alarmas) se hacen en el navegador sobre los datos ya cargados. Los estados que dependen de la hora se recalculan cada minuto.
 - **RNF-REN-05.** Los mensajes cerrados de administración se cargan por páginas: se leen de 50 en 50 hasta reunir al menos 20 cerrados, así que una página trae entre 20 y 69 (o menos, al final). Solo los abiertos llegan en vivo.
 - **RNF-REN-06.** Las escrituras masivas van en lotes: la importación de la descarga, de 100 en 100 para mostrar el avance; el borrado de la cuenta o de sus mensajes y la importación de los datos locales, de hasta 450. Las desvinculaciones y aprobaciones en bloque van de 10 en 10, y los emails en bloque comparten como mucho 3 conexiones.
-- **RNF-REN-07.** La función HTTP `api` admite como mucho 10 instancias. El cambio del modo de aprobación puede tardar hasta 300 s. `sendDueAlarms` envía como mucho 200 alarmas por ejecución, 10 a la vez, con 120 s de límite.
+- **RNF-REN-07.** La función HTTP `api` admite como mucho 10 instancias. El cambio del modo de aprobación y la eliminación de la cuenta pueden tardar hasta 300 s, y conectar Google Calendar (que sincroniza las tareas al conectar), hasta 540 s. `sendDueAlarms` envía como mucho 200 alarmas por ejecución, 10 a la vez, con 120 s de límite.
 
 ### 2.6 Compatibilidad y plataformas (RNF-COM)
 
@@ -474,7 +474,7 @@ Origen: `index.html`, `public/manifest.json`, `functions/src/app.ts`, `src/servi
 - **RNF-COM-03.** La app tiene un manifiesto web (nombre, iconos, también adaptables, modo `standalone` y orientación vertical) y las etiquetas para añadirla a la pantalla de inicio en iOS.
 - **RNF-COM-04.** La función HTTP `api` sirve `/.well-known/assetlinks.json` para verificar la app Android (APK de tipo Trusted Web Activity).
 - **RNF-COM-05.** Las fechas y horas no dependen del idioma ni de la configuración del navegador: la semana empieza en lunes y las horas son de 24 h.
-- **RNF-COM-06.** La interfaz está en español, y las fechas y los números usan el formato `es-ES`.
+- **RNF-COM-06.** La interfaz está en español (por defecto) y en inglés (RF-CUE-33), y las fechas y los números usan el formato de ese idioma (`LOCALE_TAG`: `es-ES` o `en-GB`).
 - **RNF-COM-07.** Servida desde su dominio propio, la app inicia sesión en ese mismo dominio, para que el navegador no bloquee la ventana de Google.
 - **RNF-COM-08.** Las pruebas de extremo a extremo se ejecutan en Chromium, con el perfil de Chrome de escritorio.
 
@@ -489,7 +489,7 @@ Origen: `package.json`, `tsconfig.json`, `.github/workflows/ci.yml`, `tests/`, `
 - **RNF-MAN-05.** En cada push y pull request, CI comprueba el formato, el linter, los tipos, la compilación de la app y de las funciones, y todas las pruebas. Solo despliega desde la rama principal, si todo pasa, y de un despliegue en uno.
 - **RNF-MAN-06.** La app toma la versión de `package.json`; `public/manifest.json` la repite y se actualiza a mano. Se muestra en la cabecera, el inicio de sesión y el pie, y va en las descargas y en la información técnica del contacto.
 - **RNF-MAN-07.** La app sigue leyendo los datos de versiones anteriores: tareas sin estado (con `completed`), repeticiones con fecha de inicio y repeticiones sin `from` (en fechas fijas), y borradores de tareas sin la elección de contar desde que se hace. La importación admite además correos sin estado y adjuntos sin bytes.
-- **RNF-MAN-08.** Los textos de la app van junto a donde se usan, con `messages(es, en)` (`src/i18n/locale.ts`): el catálogo inglés tiene la misma forma que el español, así que si falta un texto, no compila. El idioma es fijo mientras la página está abierta. Las fechas y los números usan `LOCALE_TAG`. En el servidor, `functions/src/i18n.ts` hace lo mismo, y los mensajes de error van en el idioma de quien llama (`functions/src/callable.ts`). Hay pruebas unitarias en inglés (`tests/unit/*-en.test.ts`, `functions/test/english.test.ts`) y una e2e del cambio de idioma.
+- **RNF-MAN-08.** Los textos de la app van junto a donde se usan, con `messages(es, en)` (`src/i18n/locale.ts`): el catálogo inglés tiene la misma forma que el español, así que si falta un texto, no compila. El idioma es fijo mientras la página está abierta. Las fechas y los números usan `LOCALE_TAG`. En el servidor, `functions/src/i18n.ts` hace lo mismo, y los mensajes de error van en el idioma de quien llama (`functions/src/callable.ts`). Hay pruebas unitarias en inglés (`tests/unit/*-en.test.ts` y `*.en.test.ts`, `functions/test/english.test.ts`) y una e2e del cambio de idioma.
 
 ---
 
