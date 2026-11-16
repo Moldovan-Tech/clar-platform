@@ -27,12 +27,12 @@ test('a task, a goal and a project download as JSON with all their data', async 
 
   await openSection(page, 'Metas');
   await page.getByRole('button', { name: 'Nueva meta en Familia' }).click();
-  await page.getByRole('dialog', { name: 'Nueva meta' }).getByLabel('Meta').fill(goalTitle);
+  await page.getByRole('dialog', { name: 'Nueva meta' }).getByLabel(/^Meta/).fill(goalTitle);
   await page.getByRole('button', { name: 'Crear la meta' }).click();
   await page.getByRole('button', { name: `Nuevo proyecto para «${goalTitle}»` }).click();
   const editor = page.getByRole('dialog', { name: 'Nuevo proyecto' });
-  await editor.getByLabel('Proyecto').fill(projectTitle);
-  await expect(editor.getByLabel('Meta')).not.toHaveValue('');
+  await editor.getByLabel(/^Proyecto/).fill(projectTitle);
+  await expect(editor.getByLabel(/^Meta/)).not.toHaveValue('');
   await editor.getByLabel('Fecha de fin', { exact: true }).fill(localDateFromToday(30));
   await editor.getByRole('button', { name: 'Crear el proyecto' }).click();
   await page.getByRole('button', { name: 'Añadir tarea' }).click();

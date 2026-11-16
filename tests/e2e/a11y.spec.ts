@@ -204,7 +204,7 @@ test('goals: dialog, the Metas section and the card in Inicio', async ({ page })
   await page.getByRole('button', { name: 'Nueva meta', exact: true }).click();
   await expectNoViolations(page, 'nueva meta');
   const editor = page.getByRole('dialog', { name: 'Nueva meta' });
-  await editor.getByLabel('Meta').fill('Ahorrar para la entrada del piso');
+  await editor.getByLabel(/^Meta/).fill('Ahorrar para la entrada del piso');
   await editor.getByLabel('Área de la Rueda').selectOption('Finanzas');
   await editor.getByRole('button', { name: 'Crear la meta' }).click();
   await expect(page.getByRole('list', { name: 'Metas de Finanzas' })).toBeVisible();
@@ -227,15 +227,15 @@ test('projects: the list, the form and a project with its tasks', async ({ page 
   await signInWithGoogle(page);
   await openSection(page, 'Metas');
   await page.getByRole('button', { name: 'Nueva meta en Familia' }).click();
-  await page.getByRole('dialog', { name: 'Nueva meta' }).getByLabel('Meta').fill('Tener la casa a punto');
+  await page.getByRole('dialog', { name: 'Nueva meta' }).getByLabel(/^Meta/).fill('Tener la casa a punto');
   await page.getByRole('button', { name: 'Crear la meta' }).click();
   await openSection(page, 'Proyectos');
   await expectNoViolations(page, 'proyectos sin proyectos');
   await page.getByRole('button', { name: 'Nuevo proyecto' }).click();
   const editor = page.getByRole('dialog', { name: 'Nuevo proyecto' });
   await expectNoViolations(page, 'nuevo proyecto');
-  await editor.getByLabel('Proyecto').fill('Reformar la cocina');
-  await editor.getByLabel('Meta').selectOption({ label: 'Tener la casa a punto' });
+  await editor.getByLabel(/^Proyecto/).fill('Reformar la cocina');
+  await editor.getByLabel(/^Meta/).selectOption({ label: 'Tener la casa a punto' });
   await editor.getByLabel('Fecha de fin', { exact: true }).fill(localDateFromToday(-1));
   await editor.getByRole('button', { name: 'Crear el proyecto' }).click();
   await page.getByRole('button', { name: 'Añadir tarea' }).click();

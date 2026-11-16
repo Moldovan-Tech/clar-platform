@@ -1,5 +1,17 @@
 import { expect, test, type Page } from '@playwright/test';
-import { approveAccess, markOnboarded, openSection, showMoreOptions, signInWithGoogle, uniqueEmail } from './helpers';
+import {
+  approveAccess,
+  installClockAwayFromMidnight,
+  localDateFromToday,
+  markOnboarded,
+  openSection,
+  showMoreOptions,
+  signInWithGoogle,
+  uniqueEmail
+} from './helpers';
+
+// YYYY-MM-DD → dd/mm/aaaa, como se ve en los campos de fecha
+const shown = (date: string) => date.split('-').reverse().join('/');
 
 // Dictar con el micrófono (Web Speech API). El reconocimiento de voz de verdad necesita micrófono y conexión con
 // Google: aquí se sustituye por uno que «oye» la frase dada, primero a medias y después entera, o que falla con el
@@ -142,4 +154,92 @@ test('«Nueva tarea» opens a new task without dictating, and pending release no
   await page.keyboard.press('Escape');
   await expect(form).toHaveCount(0);
   await expect(notes).toBeVisible({ timeout: 15_000 });
+});
+
+test('a dictated task fills in its due date, time and priority, and «Deshacer» puts it all back in the title', async ({
+  page
+}) => {
+  await installClockAwayFromMidnight(page);
+  await fakeSpeech(page, 'Llamar al taller antes de mañana a las 5 de la tarde con prioridad alta');
+  await page.goto('/');
+  await signInWithGoogle(page);
+  await openSection(page, 'Listas');
+  await page.getByRole('button', { name: 'Añadir la primera tarea' }).click();
+  const form = page.getByRole('dialog', { name: 'Nueva tarea' });
+  const tomorrow = localDateFromToday(1);
+
+  await form.getByRole('button', { name: 'Dictar la tarea' }).click();
+  await expect(form.getByLabel(/^Tarea/)).toHaveValue('Llamar al taller');
+  await expect(form.getByLabel('Fecha límite', { exact: true })).toHaveValue(shown(tomorrow));
+  await expect(form.getByLabel('Hora límite')).toHaveValue('17:00');
+  await expect(form.getByLabel(/^Prioridad/)).toHaveValue('HIGH');
+  await expect(form.getByRole('status').filter({ hasText: 'He entendido:' })).toContainText(
+    /vence el .+ a las 17:00 · prioridad alta/
+  );
+
+  // «Deshacer» deja la frase entera en el título y el formulario como estaba
+  await form.getByRole('button', { name: /^Deshacer: volver a poner/ }).click();
+  await expect(form.getByLabel(/^Tarea/)).toHaveValue(
+    'Llamar al taller antes de mañana a las 5 de la tarde con prioridad alta'
+  );
+  await expect(form.getByLabel('Fecha límite', { exact: true })).toHaveValue('');
+  await expect(form.getByLabel(/^Prioridad/)).toHaveValue('MEDIUM');
+  await expect(form.getByText('He entendido:')).toHaveCount(0);
+
+  // Escribir a mano no se entiende: solo lo dictado
+  await form.getByLabel(/^Tarea/).fill('Llamar al taller antes de mañana');
+  await expect(form.getByLabel('Fecha límite', { exact: true })).toHaveValue('');
+
+  // Dictado otra vez (sustituye lo escrito, que se borra antes) y guardado
+  await form.getByLabel(/^Tarea/).fill('');
+  await form.getByRole('button', { name: 'Dictar la tarea' }).click();
+  await expect(form.getByLabel(/^Tarea/)).toHaveValue('Llamar al taller');
+  await form.getByRole('button', { name: 'Guardar la tarea' }).click();
+  await expect(page.getByRole('heading', { name: 'Llamar al taller' })).toBeVisible();
+});
+
+test('a goal and its why can be dictated, with the target date in the name', async ({ page }) => {
+  await installClockAwayFromMidnight(page);
+  await fakeSpeech(page, 'Correr una media maratón antes de mañana');
+  await page.goto('/');
+  await signInWithGoogle(page);
+  await openSection(page, 'Metas');
+  await page.getByRole('button', { name: 'Nueva meta en Salud' }).click();
+  const editor = page.getByRole('dialog', { name: 'Nueva meta' });
+
+  await editor.getByRole('button', { name: 'Dictar la meta' }).click();
+  await expect(editor.getByLabel(/^Meta/)).toHaveValue('Correr una media maratón');
+  await expect(editor.getByLabel('Fecha objetivo', { exact: true })).toHaveValue(shown(localDateFromToday(1)));
+  await expect(editor.getByRole('status').filter({ hasText: 'He entendido:' })).toContainText('fecha objetivo:');
+
+  // El para qué se dicta tal cual, sin entender fechas
+  await editor.getByRole('button', { name: 'Dictar el para qué' }).click();
+  await expect(editor.getByLabel('¿Para qué?')).toHaveValue('Correr una media maratón antes de mañana');
+
+  await editor.getByRole('button', { name: 'Crear la meta' }).click();
+  await expect(editor).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'Correr una media maratón' })).toBeVisible();
+});
+
+test('a project can be dictated, with its end date in the name', async ({ page }) => {
+  await installClockAwayFromMidnight(page);
+  await fakeSpeech(page, 'Reformar la cocina antes de mañana');
+  await page.goto('/');
+  await signInWithGoogle(page);
+  await openSection(page, 'Metas');
+  await page.getByRole('button', { name: 'Nueva meta en Familia' }).click();
+  await page.getByRole('dialog', { name: 'Nueva meta' }).getByLabel(/^Meta/).fill('Tener la casa a punto');
+  await page.getByRole('button', { name: 'Crear la meta' }).click();
+
+  await openSection(page, 'Proyectos');
+  await page.getByRole('button', { name: 'Nuevo proyecto' }).click();
+  const editor = page.getByRole('dialog', { name: 'Nuevo proyecto' });
+  await editor.getByRole('button', { name: 'Dictar el proyecto' }).click();
+  await expect(editor.getByLabel(/^Proyecto/)).toHaveValue('Reformar la cocina');
+  await expect(editor.getByLabel('Fecha de fin', { exact: true })).toHaveValue(shown(localDateFromToday(1)));
+
+  // «Deshacer» devuelve la frase al nombre y vacía la fecha
+  await editor.getByRole('button', { name: /^Deshacer: volver a poner/ }).click();
+  await expect(editor.getByLabel(/^Proyecto/)).toHaveValue('Reformar la cocina antes de mañana');
+  await expect(editor.getByLabel('Fecha de fin', { exact: true })).toHaveValue('');
 });

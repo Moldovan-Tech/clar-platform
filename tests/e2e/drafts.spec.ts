@@ -57,7 +57,7 @@ test('«Deshacer» removes a new draft, a deleted draft can be recovered, and an
   await signInWithGoogle(page);
   await openSection(page, 'Listas');
   const drafts = page.getByRole('button', { name: /^Borradores/ });
-  const undo = page.getByRole('button', { name: 'Deshacer' });
+  const undo = page.getByRole('button', { name: 'Deshacer', exact: true });
 
   // Cerrar y deshacer: no queda borrador (el aviso de abajo)
   await page.getByRole('button', { name: 'Añadir la primera tarea' }).click();
@@ -83,7 +83,7 @@ test('«Deshacer» removes a new draft, a deleted draft can be recovered, and an
   await list.getByRole('button', { name: `Eliminar el borrador «${title}»` }).click();
   await expect(list).toContainText('No tienes borradores.');
   // «Deshacer» en la propia lista (el aviso queda debajo de ella)
-  await list.getByRole('button', { name: 'Deshacer' }).click();
+  await list.getByRole('button', { name: 'Deshacer', exact: true }).click();
   await expect(list).toContainText(title);
   await page.keyboard.press('Escape');
   await expect(drafts).toContainText('1');

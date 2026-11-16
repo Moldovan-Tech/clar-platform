@@ -8,6 +8,8 @@ import { areasInUse } from '../services/wheel';
 import { useAreas } from '../hooks/useAreas';
 import { DateField } from './DateField';
 import { DiscardChangesPrompt } from './DiscardChangesPrompt';
+import { DictateButton, DictationUnderstood } from './DictateButton';
+import { useDictatedDate } from '../hooks/useDictatedDate';
 import { messages } from '../i18n/locale';
 
 interface ProjectModalProps {
@@ -36,6 +38,9 @@ const m = messages(
     archived: ' (archivada)',
     goalNote: 'Sus tareas contarán en el avance de esa meta.',
     endDate: 'Fecha de fin',
+    dictateProject: 'Dictar el proyecto',
+    dictateDescription: 'Dictar la descripción',
+    understoodDate: (day: string) => `fecha de fin: ${day}`,
     description: 'Descripción',
     optional: '(opcional)',
     descriptionPlaceholder: 'Qué tiene que quedar hecho al terminar',
@@ -63,6 +68,9 @@ const m = messages(
     archived: ' (archived)',
     goalNote: 'Its tasks will count toward that goal’s progress.',
     endDate: 'End date',
+    dictateProject: 'Dictate the project',
+    dictateDescription: 'Dictate the description',
+    understoodDate: (day) => `end date: ${day}`,
     description: 'Description',
     optional: '(optional)',
     descriptionPlaceholder: 'What has to be done when it ends',
@@ -108,6 +116,9 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   // Una fecha a medio escribir (o imposible) también es un cambio
   const [dateDraft, setDateDraft] = useState(false);
   const guard = useDiscardGuard(snapshot !== openedSnapshot || dateDraft, onClose);
+  // Dictado: el nombre puede llevar la fecha de fin («… antes del 30 de junio»); la descripción, solo texto
+  const dictated = useDictatedDate(setTitle, endDate, setEndDate, m.understoodDate);
+  const [typedDescription, setTypedDescription] = useState(0);
 
   const dialogRef = useRef<HTMLDivElement>(null);
   useModalFocus(true, dialogRef, guard.requestClose);
@@ -171,16 +182,30 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
             <label htmlFor="project-title" className={labelClass}>
               {m.project} <span className="text-red-600">*</span>
             </label>
-            <input
-              id="project-title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              maxLength={PROJECT_TITLE_MAX}
-              placeholder={m.titlePlaceholder}
-              className={inputClass}
-              data-autofocus
-            />
+            <div className="flex flex-wrap items-center gap-1">
+              <input
+                id="project-title"
+                type="text"
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  dictated.onTyped();
+                }}
+                maxLength={PROJECT_TITLE_MAX}
+                placeholder={m.titlePlaceholder}
+                className={`${inputClass} min-w-0 flex-1`}
+                data-autofocus
+              />
+              <DictateButton
+                label={m.dictateProject}
+                value={title}
+                onChange={setTitle}
+                pause={guard.confirming}
+                typed={dictated.typed}
+                onFinal={dictated.onFinal}
+              />
+            </div>
+            <DictationUnderstood summary={dictated.summary} onUndo={dictated.undo} />
           </div>
 
           <div>
@@ -221,7 +246,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
             <DateField
               label={m.endDate}
               value={endDate}
-              onChange={setEndDate}
+              onChange={dictated.onDateChanged}
               onDraftChange={setDateDraft}
               inputClassName={inputClass}
             />
@@ -232,15 +257,27 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
               {m.description}{' '}
               <span className="font-normal tracking-normal text-slate-500 normal-case">{m.optional}</span>
             </label>
-            <textarea
-              id="project-description"
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              maxLength={PROJECT_DESCRIPTION_MAX}
-              placeholder={m.descriptionPlaceholder}
-              className={inputClass}
-            />
+            <div className="flex flex-wrap items-start gap-1">
+              <textarea
+                id="project-description"
+                rows={2}
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  setTypedDescription((n) => n + 1);
+                }}
+                maxLength={PROJECT_DESCRIPTION_MAX}
+                placeholder={m.descriptionPlaceholder}
+                className={`${inputClass} min-w-0 flex-1`}
+              />
+              <DictateButton
+                label={m.dictateDescription}
+                value={description}
+                onChange={setDescription}
+                pause={guard.confirming}
+                typed={typedDescription}
+              />
+            </div>
           </div>
 
           {submitted && error && (

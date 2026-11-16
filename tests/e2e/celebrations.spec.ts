@@ -75,13 +75,13 @@ test('doing a task that waited 14 days or more celebrates it once; «Deshacer» 
   const toast = notice(page);
   await expect(toast).toContainText('Tarea hecha y archivada. La encontrarás en «Archivadas».');
   await expect(toast).toContainText(celebrationOf('oldTask', 23));
-  await expect(toast.getByRole('button', { name: 'Deshacer' })).toBeVisible();
+  await expect(toast.getByRole('button', { name: 'Deshacer', exact: true })).toBeVisible();
   // El confeti solo decora: oculto a los lectores de pantalla y sin recibir el puntero
   await expect(pieces(page)).toHaveCount(16);
   await expect(page.locator(BURST)).toHaveCSS('pointer-events', 'none');
 
   // «Deshacer» quita la celebración
-  await toast.getByRole('button', { name: 'Deshacer' }).click();
+  await toast.getByRole('button', { name: 'Deshacer', exact: true }).click();
   await expect(toast).toContainText('Tarea recuperada.');
   await expect(toast).not.toContainText(anyCelebration);
   await expect(pieces(page)).toHaveCount(0);
@@ -151,7 +151,7 @@ test('finishing a project and achieving a goal celebrate them, once per session'
   await openSection(page, 'Metas');
   await page.getByRole('button', { name: 'Nueva meta en Familia' }).click();
   const goalEditor = page.getByRole('dialog', { name: 'Nueva meta' });
-  await goalEditor.getByLabel('Meta').fill(goalTitle);
+  await goalEditor.getByLabel(/^Meta/).fill(goalTitle);
   await goalEditor.getByRole('button', { name: 'Crear la meta' }).click();
   await expect(goalEditor).toBeHidden();
 
@@ -159,8 +159,8 @@ test('finishing a project and achieving a goal celebrate them, once per session'
   await openSection(page, 'Proyectos');
   await page.getByRole('button', { name: 'Nuevo proyecto' }).click();
   const projectEditor = page.getByRole('dialog', { name: 'Nuevo proyecto' });
-  await projectEditor.getByLabel('Proyecto').fill(projectTitle);
-  await projectEditor.getByLabel('Meta').selectOption({ label: goalTitle });
+  await projectEditor.getByLabel(/^Proyecto/).fill(projectTitle);
+  await projectEditor.getByLabel(/^Meta/).selectOption({ label: goalTitle });
   await projectEditor.getByLabel('Fecha de fin', { exact: true }).fill(localDateFromToday(30));
   await projectEditor.getByRole('button', { name: 'Crear el proyecto' }).click();
   await expect(projectEditor).toBeHidden();

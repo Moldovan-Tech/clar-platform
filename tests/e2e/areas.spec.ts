@@ -34,7 +34,7 @@ test('areas can be renamed, added and hidden, and the whole app follows', async 
   const goalForm = page.getByRole('dialog', { name: 'Nueva meta' });
   await expect(goalForm.getByLabel('Área de la Rueda')).toHaveValue(/^area-/);
   await expect(goalForm.getByLabel('Área de la Rueda').getByRole('option', { name: 'Espiritualidad' })).toHaveCount(0);
-  await goalForm.getByLabel('Meta').fill('Terminar el curso de alemán');
+  await goalForm.getByLabel(/^Meta/).fill('Terminar el curso de alemán');
   await goalForm.getByRole('button', { name: 'Crear la meta' }).click();
   await expect(page.getByRole('list', { name: 'Metas de Aprendizaje' })).toContainText('Terminar el curso de alemán');
 

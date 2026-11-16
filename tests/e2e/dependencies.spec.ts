@@ -51,7 +51,7 @@ test('tasks that wait for another are blocked until it is done, in parallel, and
   }
 
   // «Deshacer» la reabre y vuelven a esperar
-  await page.getByRole('button', { name: 'Deshacer' }).click();
+  await page.getByRole('button', { name: 'Deshacer', exact: true }).click();
   await expect(top10.getByText(first)).toBeVisible();
   await expect(page.getByText(`Bloqueada: espera a «${first}»`)).toHaveCount(2);
 });

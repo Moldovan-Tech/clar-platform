@@ -268,6 +268,13 @@ La lista completa y numerada de lo que hace la app, con sus requisitos no funcio
 - **A mano:** en «Tu cuenta», debajo del idioma, la versión en uso y «Buscar actualizaciones» (`UpdateCheck`, en `AccountMenu`).
 - **Dependencias:** `body-parser` 2.4.0, `nodemailer` 10.1.4 y `qs` 6.17.1 en las Functions, y `@grpc/grpc-js` 1.14 para `@firebase/firestore` (#82, #83, #84).
 
+### Tareas completas por voz, y metas y proyectos dictados (1.4.0)
+
+- **Tarea dictada** (`src/services/voiceTask.ts`, `parseDictatedTask`): al terminar de dictar el título, «Llamar al taller antes del viernes a las 5 de la tarde con prioridad alta» deja el título «Llamar al taller» y rellena la fecha límite, la hora límite y la prioridad. El día puede ser hoy, mañana, pasado mañana, un día de la semana (el siguiente, contando hoy; «próximo» no lo cuenta), «el 20», «el 20 de noviembre [de 2027]» o «el viernes 20 de noviembre», con números en cifras o en palabras; la hora, «a las 17:30», «a las 5 de la tarde», «a las 9 y media», «al mediodía», «a medianoche» (23:59); la prioridad, crítica (o urgente), alta, media (o normal) o baja, con «con» o como «prioridad: alta», y solo al final o justo antes del plazo (en medio del título es parte de él). Las partes son opcionales. Solo se entiende lo que sigue a «antes de» si es un día o una hora («antes de la reunión» se queda en el título), y lo escrito a mano no se toca. En inglés, “before|by Friday at 5 pm with high priority” (también “half five” y “5 o’clock”). En una tarea que se repite solo se toma la prioridad (`due: false`), y el plazo dicho se queda en el título. El texto se normaliza a NFC, por si el reconocedor da las tildes separadas.
+- **Lo entendido, a la vista:** «He entendido: vence el 20 nov 2026 a las 17:00 · prioridad alta», con «Deshacer», que devuelve la frase entera al título y el formulario a como estaba (`DictationUnderstood`; el botón, fuera de la región viva). Cambiar a mano el título, la fecha, la hora o la prioridad quita el aviso, así «Deshacer» no pisa nada. `DictateButton` avisa al terminar bien un dictado (`onFinal`), no al dejarlo por escribir a mano, por empezar otro o por la pregunta de descartar los cambios (`pause`).
+- **Metas y proyectos:** micrófono en el nombre y el para qué de la meta, en el nombre y la descripción del proyecto, y en «Nueva meta» del formulario de la tarea. En el nombre, «… antes del 1 de marzo» rellena la fecha objetivo de la meta o la de fin del proyecto (`parseDictatedDate`, `useDictatedDate`); con hora o prioridad, la frase se queda entera.
+- **Pruebas:** `voiceTask.test.ts` y `voiceTask-en.test.ts` (también con `TZ=Europe/Madrid` y `America/New_York`), y en `voice.spec.ts` la tarea completa con «Deshacer», la meta y el proyecto. Los selectores e2e `getByLabel('Meta')` y `('Proyecto')` pasan a `/^Meta/` y `/^Proyecto/`, y los `Deshacer` de los avisos llevan `exact: true`, para no confundirse con los micrófonos ni con el «Deshacer» del dictado.
+
 ---
 
 ## 🛠️ Stack Tecnológico
@@ -571,6 +578,7 @@ El repositorio utiliza `package-lock.json` (en la raíz, en `functions/` y en `t
 │   │   ├── useReauthMethods.ts  # Cómo confirmar con un inicio de sesión reciente (el método de esta sesión primero)
 │   │   ├── useAccountLanguage.ts # Idioma guardado en la cuenta, al abrir con el perfil confirmado
 │   │   ├── useAppUpdate.ts      # Comprobar si hay versión nueva con la app abierta
+│   │   ├── useDictatedDate.ts   # Nombre dictado de una meta o un proyecto, con su fecha
 │   │   └── useTaskAlarms.ts     # Alarmas de las tareas mientras la app está abierta
 │   ├── services/
 │   │   ├── firebase.ts          # Firebase (Auth, Firestore con caché sin conexión, Functions) y sincronización forzada
@@ -583,6 +591,7 @@ El repositorio utiliza `package-lock.json` (en la raíz, en `functions/` y en `t
 │   │   ├── appUpdate.ts         # Versión nueva: compara /version.json con la cargada
 │   │   ├── platform.ts          # Dispositivo y modo (iPhone, app instalada, APK) para avisos e inicio de sesión
 │   │   ├── speech.ts            # Dictado por voz (Web Speech API)
+│   │   ├── voiceTask.ts         # Tarea dictada: título, plazo y prioridad («… antes del viernes a las 5…»)
 │   │   ├── auth.ts              # Email y contraseña: alta con verificación, acceso, recuperación y cambio
 │   │   ├── account.ts           # Descarga de los datos, eliminación de la cuenta y cierre de todas las sesiones
 │   │   ├── importData.ts        # Importar la descarga: validación campo a campo, qué entra y fusión de áreas
@@ -620,7 +629,7 @@ El repositorio utiliza `package-lock.json` (en la raíz, en `functions/` y en `t
 │       ├── DiscardChangesPrompt.tsx # «¿Descartar los cambios?»
 │       ├── TaskList.tsx · TaskCard.tsx · TaskActionsMenu.tsx # Top 10 y resto, tarjeta y menú «⋯»
 │       ├── TaskModal.tsx        # Captura con validación sintáctica, meta, sugerencias, fechas, alarma y repetición
-│       ├── DictateButton.tsx    # Micrófono para dictar el título y las notas
+│       ├── DictateButton.tsx    # Micrófono para dictar, y «He entendido: …» con «Deshacer»
 │       ├── TaskDraftsModal.tsx  # «Borradores»: tareas nuevas cerradas sin guardar
 │       ├── DateField.tsx · TimeField.tsx · TaskDates.tsx · TaskStatusSelect.tsx · ArchivedTasksModal.tsx
 │       ├── AlarmAlerts.tsx · NotificationPermission.tsx # Avisos de alarma y permiso de notificaciones

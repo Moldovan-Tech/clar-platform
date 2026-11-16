@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { GOAL_TITLE_MAX, validateGoal } from '../services/goals';
 import { useAreas } from '../hooks/useAreas';
 import { messages } from '../i18n/locale';
+import { DictateButton } from './DictateButton';
 
 const m = messages(
   {
@@ -11,6 +12,7 @@ const m = messages(
     area: 'Área de la nueva meta',
     create: 'Crear la meta',
     cancel: 'Cancelar',
+    dictate: 'Dictar la nueva meta',
     note: 'Se guarda al crearla, aunque luego no guardes la tarea. El para qué y la fecha objetivo los puedes añadir en «Metas».'
   },
   {
@@ -20,6 +22,7 @@ const m = messages(
     area: 'Area of the new goal',
     create: 'Create goal',
     cancel: 'Cancel',
+    dictate: 'Dictate the new goal',
     note: 'It’s saved when you create it, even if you don’t save the task. You can add the why and the target date in “Goals”.'
   }
 );
@@ -36,6 +39,7 @@ export const NewGoalInline: React.FC<{
   // El área de la tarea, si está a la vista (una meta nueva no va a un área oculta); si no, la primera
   const [area, setArea] = useState(visible.some((a) => a.id === defaultArea) ? defaultArea! : (visible[0]?.id ?? ''));
   const [error, setError] = useState<string | null>(null);
+  const [typed, setTyped] = useState(0);
   const titleRef = useRef<HTMLInputElement>(null);
   const groupRef = useRef<HTMLDivElement>(null);
 
@@ -76,21 +80,33 @@ export const NewGoalInline: React.FC<{
         {m.newGoal}
       </p>
       <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-        <input
-          ref={titleRef}
-          type="text"
-          value={title}
-          onChange={(e) => {
-            setTitle(e.target.value);
-            setError(null);
-          }}
-          maxLength={GOAL_TITLE_MAX}
-          aria-label={m.name}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? 'task-new-goal-error' : undefined}
-          placeholder={m.placeholder}
-          className="min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-        />
+        <div className="flex min-w-0 items-center gap-1">
+          <input
+            ref={titleRef}
+            type="text"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setError(null);
+              setTyped((n) => n + 1);
+            }}
+            maxLength={GOAL_TITLE_MAX}
+            aria-label={m.name}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'task-new-goal-error' : undefined}
+            placeholder={m.placeholder}
+            className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+          />
+          <DictateButton
+            label={m.dictate}
+            value={title}
+            onChange={(value) => {
+              setTitle(value);
+              setError(null);
+            }}
+            typed={typed}
+          />
+        </div>
         <select
           value={area}
           onChange={(e) => setArea(e.target.value)}

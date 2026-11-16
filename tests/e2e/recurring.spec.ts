@@ -59,7 +59,7 @@ test('a task repeated on the second Monday of every month creates its next occur
   await page.keyboard.press('Escape');
 
   // «Deshacer» devuelve la tarea y quita la repetición creada; volver a marcarla la crea de nuevo
-  await page.getByRole('button', { name: 'Deshacer' }).click();
+  await page.getByRole('button', { name: 'Deshacer', exact: true }).click();
   await expect(page.getByText(`Vence: ${dateFormat.format(next)}`)).toBeHidden();
   await expect(page.getByText(`Vence: ${dateFormat.format(due)}`)).toBeVisible();
   await completeTask(page, title);

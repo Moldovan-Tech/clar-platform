@@ -65,7 +65,7 @@ test('archives a task when marked done and reactivates it from the archive', asy
   await expect(page.getByRole('heading', { name: title })).toBeHidden();
 
   // «Deshacer» la devuelve a la lista; volver a marcarla la archiva
-  await page.getByRole('button', { name: 'Deshacer' }).click();
+  await page.getByRole('button', { name: 'Deshacer', exact: true }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
   await completeTask(page, title);
   await expect(page.getByRole('heading', { name: title })).toBeHidden();
@@ -110,7 +110,7 @@ test('a cancelled task is archived as cancelled, with «Deshacer», and can be r
   await page.getByLabel(`Estado de «${title}»`).selectOption('CANCELLED');
   await expect(page.getByText('Tarea cancelada y archivada. La encontrarás en «Archivadas».')).toBeVisible();
   await expect(page.getByRole('heading', { name: title })).toBeHidden();
-  await page.getByRole('button', { name: 'Deshacer' }).click();
+  await page.getByRole('button', { name: 'Deshacer', exact: true }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
   await openTaskActions(page, title);
   await page.getByLabel(`Estado de «${title}»`).selectOption('CANCELLED');
@@ -177,7 +177,7 @@ test('a deleted task can be brought back with «Deshacer»', async ({ page }) =>
   await openTaskActions(page, title);
   await page.getByRole('button', { name: `Eliminar «${title}»` }).click();
   await expect(page.getByRole('heading', { name: title })).toBeHidden();
-  await page.getByRole('button', { name: 'Deshacer' }).click();
+  await page.getByRole('button', { name: 'Deshacer', exact: true }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
   // Sigue ahí tras recargar: se ha vuelto a guardar
   await page.reload();
