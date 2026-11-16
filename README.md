@@ -31,7 +31,7 @@ offline, in Spanish or English.
 - **Try it:** https://clar.life/?lang=en
 - **Stack:** React 19, TypeScript, Vite, Tailwind CSS 4 and Firebase (Auth, Firestore with offline cache, Cloud
   Functions, Hosting, Cloud Messaging). Tests with Node's test runner, the Firebase emulators and Playwright.
-- **Run it locally** (Node.js ≥ 22.12 and Java 21 for the emulators; no Firebase account needed):
+- **Run it locally** (Node.js ≥ 22.13 and Java 21 for the emulators; no Firebase account needed):
 
   ```bash
   git clone https://github.com/Moldovan-Tech/clar-platform.git && cd clar-platform
@@ -275,6 +275,10 @@ La lista completa y numerada de lo que hace la app, con sus requisitos no funcio
 - **Metas y proyectos:** micrófono en el nombre y el para qué de la meta, en el nombre y la descripción del proyecto, y en «Nueva meta» del formulario de la tarea. En el nombre, «… antes del 1 de marzo» rellena la fecha objetivo de la meta o la de fin del proyecto (`parseDictatedDate`, `useDictatedDate`); con hora o prioridad, la frase se queda entera.
 - **Pruebas:** `voiceTask.test.ts` y `voiceTask-en.test.ts` (también con `TZ=Europe/Madrid` y `America/New_York`), y en `voice.spec.ts` la tarea completa con «Deshacer», la meta y el proyecto. Los selectores e2e `getByLabel('Meta')` y `('Proyecto')` pasan a `/^Meta/` y `/^Proyecto/`, y los `Deshacer` de los avisos llevan `exact: true`, para no confundirse con los micrófonos ni con el «Deshacer» del dictado.
 
+### Mantenimiento (1.4.1)
+
+- **Dependencias:** `npm audit fix` en la raíz, `functions/` y `tools/eslint`. En las Functions, `uuid`, `glob`, `minimatch` y `rimraf` desaparecen y `gaxios` (6.3.0), `google-gax` y `gcp-metadata` bajan a versiones sin el aviso: quedan sin avisos. En la raíz, `hono`, `@hono/node-server`, `body-parser` y `zod` suben, y `basic-ftp` desaparece (con `proxy-agent`). `firebase-tools` 15.36.0, `eslint` 10.15.0 y `typescript-eslint` 8.72.2; con ESLint 10.15, Node 22.13 o posterior (`engines`). Las dependencias de producción (`npm audit --omit=dev`) de la app y las Functions no tienen avisos. Quedan avisos moderados sin arreglo publicado en herramientas de desarrollo: en la raíz, dentro de `firebase-tools` (`glob`, `minimatch`, `uuid`); en `tools/eslint`, dentro de `typescript-eslint` (`minimatch`).
+
 ---
 
 ## 🛠️ Stack Tecnológico
@@ -293,7 +297,7 @@ La lista completa y numerada de lo que hace la app, con sus requisitos no funcio
 
 ### Prerrequisitos
 
-- Node.js $\ge 22.12$ (`engines` en `package.json`; la CI y las Functions usan Node 22)
+- Node.js $\ge 22.13$ (lo pide ESLint 10.15; `engines` en `package.json`; la CI y las Functions usan Node 22)
 - npm (el gestor utilizado por CI y el despliegue)
 - Java 21 o superior para el emulador de Firestore (desarrollo local y pruebas)
 - La Firebase CLI se instala con `npm ci` (`firebase-tools` en `devDependencies`); `npx firebase …` usa esa versión
