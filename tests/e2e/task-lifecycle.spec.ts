@@ -6,6 +6,7 @@ import {
   fillAndSaveTask,
   localDateFromToday,
   openTaskActions,
+  showMoreOptions,
   signInWithGoogle
 } from './helpers';
 
@@ -92,6 +93,62 @@ test('archives a task when marked done and reactivates it from the archive', asy
   await archive.getByRole('button', { name: 'Cerrar' }).click();
 
   // Reactivada «En progreso»: la tarjeta lo indica (las pendientes no llevan estado)
+  const card = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: title }) });
+  await expect(card.getByText('En progreso', { exact: true })).toBeVisible();
+});
+
+test('the task form changes the status when saving: done with «Deshacer», and in progress', async ({ page }) => {
+  await page.goto('/');
+  await signInWithGoogle(page);
+  await page.getByRole('button', { name: 'Listas', exact: true }).click();
+
+  const title = `Revisar el contrato ${unique()}`;
+  await page.getByRole('button', { name: 'Añadir la primera tarea' }).click();
+  await fillAndSaveTask(page, { title });
+
+  // Una tarea nueva no tiene estado en el formulario (siempre empieza pendiente)
+  await page.getByRole('button', { name: 'Añadir tarea', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByLabel(/^Estado de/)).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+
+  // Al editarla: el estado y otro cambio se guardan juntos; «Hecha» la archiva y «Deshacer» devuelve solo el estado
+  await page.getByRole('button', { name: title, exact: true }).click();
+  await expect(dialog.getByRole('heading', { name: 'Editar la tarea' })).toBeVisible();
+  const status = dialog.getByLabel(`Estado de «${title}»`);
+  await expect(status).toHaveValue('PENDING');
+  await showMoreOptions(page);
+  await dialog.getByLabel('Descripción').fill('Con la versión firmada');
+  await status.selectOption('DONE');
+  await dialog.getByRole('button', { name: 'Guardar los cambios' }).click();
+  await expect(dialog).toBeHidden();
+  // El aviso es el del estado (con «Deshacer»), no «Tarea guardada.»
+  await expect(page.getByText('Tarea hecha y archivada. La encontrarás en «Archivadas».')).toBeVisible();
+  await expect(page.getByText('Tarea guardada.')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: title })).toBeHidden();
+  await page.getByRole('button', { name: 'Deshacer', exact: true }).click();
+  await expect(page.getByRole('heading', { name: title })).toBeVisible();
+
+  await page.getByRole('button', { name: title, exact: true }).click();
+  await showMoreOptions(page);
+  await expect(dialog.getByLabel('Descripción')).toHaveValue('Con la versión firmada');
+  // Cambiar solo el estado también es un cambio sin guardar: cerrar pregunta antes de descartarlo. Volver al de antes,
+  // no
+  const prompt = page.getByRole('alertdialog', { name: '¿Descartar los cambios?' });
+  await status.selectOption('IN_PROGRESS');
+  await status.selectOption('PENDING');
+  await dialog.getByRole('button', { name: 'Cerrar' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(prompt).toHaveCount(0);
+  await page.getByRole('button', { name: title, exact: true }).click();
+  await status.selectOption('IN_PROGRESS');
+  await dialog.getByRole('button', { name: 'Cerrar' }).click();
+  await expect(prompt).toBeVisible();
+  await prompt.getByRole('button', { name: 'Seguir editando', exact: true }).click();
+  await expect(prompt).toBeHidden();
+  await dialog.getByRole('button', { name: 'Guardar los cambios' }).click();
+  await expect(page.getByText('Tarea guardada.')).toBeVisible();
   const card = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: title }) });
   await expect(card.getByText('En progreso', { exact: true })).toBeVisible();
 });

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, Repeat } from 'lucide-react';
-import { TaskItem } from '../types';
+import { CalendarDays, Check, ChevronLeft, ChevronRight, Lock, Repeat } from 'lucide-react';
+import { TaskItem, TaskStatus } from '../types';
 import { AgendaItem, buildAgenda, daysFrom, overdueTasks, startOfWeek } from '../services/agenda';
 import { toDateString } from '../services/recurrence';
 import { DEADLINE_TITLE_CLASS, formatTaskDates, toLocalDate } from '../services/tasks';
+import { blockerOf, tasksById } from '../services/dependencies';
 import { useNow } from '../hooks/useNow';
+import { TaskStatusSelect } from './TaskStatusSelect';
 import { LOCALE_TAG, messages } from '../i18n/locale';
 
 const m = messages(
@@ -21,7 +23,8 @@ const m = messages(
     personal: 'Personal',
     dueToday: '(vence hoy)',
     title: 'Agenda',
-    intro: 'Tareas con fecha de tus dos listas y repeticiones previstas. Pulsa una tarea para editarla.',
+    intro:
+      'Tareas con fecha de tus dos listas y repeticiones previstas. Pulsa una tarea para editarla, o cambia su estado desde aquí.',
     view: 'Vista de la agenda',
     week: 'Semana',
     byDay: 'Por días',
@@ -31,7 +34,11 @@ const m = messages(
     legend: 'Leyenda',
     upcomingRepeat: 'Repetición prevista',
     nothingScheduled: 'Sin nada programado',
-    overdue: (count: number) => `Vencidas (${count})`
+    overdue: (count: number) => `Vencidas (${count})`,
+    markDone: (title: string) => `Marcar «${title}» como hecha`,
+    markDoneTitle: 'Marcar como hecha',
+    blocked: 'Bloqueada',
+    blockedNote: '(bloqueada: espera a otra tarea)'
   },
   {
     labels: {
@@ -45,7 +52,8 @@ const m = messages(
     personal: 'Personal',
     dueToday: '(due today)',
     title: 'Agenda',
-    intro: 'Tasks with dates from both your lists and upcoming repeats. Tap a task to edit it.',
+    intro:
+      'Tasks with dates from both your lists and upcoming repeats. Tap a task to edit it, or change its status here.',
     view: 'Agenda view',
     week: 'Week',
     byDay: 'By day',
@@ -55,13 +63,19 @@ const m = messages(
     legend: 'Legend',
     upcomingRepeat: 'Upcoming repeat',
     nothingScheduled: 'Nothing scheduled',
-    overdue: (count) => `Overdue (${count})`
+    overdue: (count) => `Overdue (${count})`,
+    markDone: (title) => `Mark “${title}” as done`,
+    markDoneTitle: 'Mark as done',
+    blocked: 'Blocked',
+    blockedNote: '(blocked: waiting for another task)'
   }
 );
 
 interface AgendaViewProps {
   tasks: TaskItem[];
   onEditTask: (task: TaskItem) => void;
+  // Cambia el estado con las mismas reglas que las listas (dependencias, repeticiones, «Deshacer»)
+  onChangeStatus: (task: TaskItem, status: TaskStatus) => void;
 }
 
 type AgendaMode = 'week' | 'days';
@@ -80,7 +94,83 @@ const CONTEXT_STYLE = {
 const titleClass = (item: AgendaItem) =>
   `${item.deadline === 'today' ? 'font-bold' : 'font-semibold'} ${DEADLINE_TITLE_CLASS[item.deadline] || 'text-slate-900'}`;
 
-const AgendaEntry: React.FC<{ item: AgendaItem; onEditTask: (task: TaskItem) => void }> = ({ item, onEditTask }) => {
+interface EntryActions {
+  onEditTask: (task: TaskItem) => void;
+  onChangeStatus: (task: TaskItem, status: TaskStatus) => void;
+}
+
+// Controles de estado de una tarea real: completar de un toque (o el candado si espera a otra) y el selector de estado.
+// Marcarla como hecha o cancelada la quita de la agenda (el aviso ofrece «Deshacer»)
+const DoneButton: React.FC<{ task: TaskItem; blocked: boolean; onChangeStatus: EntryActions['onChangeStatus'] }> = ({
+  task,
+  blocked,
+  onChangeStatus
+}) =>
+  blocked ? (
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center" title={m.blocked} aria-hidden="true">
+      <Lock className="h-3.5 w-3.5 text-amber-700" />
+    </span>
+  ) : (
+    <button
+      type="button"
+      onClick={() => onChangeStatus(task, 'DONE')}
+      aria-label={m.markDone(task.title)}
+      title={m.markDoneTitle}
+      className="group flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+    >
+      <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-slate-300 bg-white transition-colors group-hover:border-emerald-500 group-hover:bg-emerald-50 group-focus-visible:border-emerald-500 group-active:bg-emerald-100">
+        <Check
+          className="h-3 w-3 text-emerald-600 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+          aria-hidden="true"
+        />
+      </span>
+    </button>
+  );
+
+// Una entrada: el contenido abre la tarea (un botón) y, debajo, sus controles de estado (no pueden ir dentro del botón;
+// debajo, el título conserva todo el ancho en las columnas estrechas de la semana)
+const EntryCard: React.FC<
+  EntryActions & {
+    task: TaskItem;
+    // Sin controles: una repetición prevista (aún no es una tarea) o los demás días de un intervalo (los lleva el
+    // primero que se ve, para no repetirlos con el mismo nombre)
+    withControls: boolean;
+    // En la semana, entre md y lg las columnas no dan para el selector: solo el círculo (el estado está en la tarea)
+    inWeek?: boolean;
+    blocked: boolean;
+    className: string;
+    children: React.ReactNode;
+  }
+> = ({ task, withControls, inWeek = false, blocked, className, children, onEditTask, onChangeStatus }) => (
+  <div className={`space-y-1 rounded-lg border border-l-4 p-1 text-xs ${className}`}>
+    <button
+      type="button"
+      onClick={() => onEditTask(task)}
+      className="block w-full space-y-0.5 rounded-md p-1 text-left hover:bg-slate-50"
+    >
+      {children}
+      {blocked && <span className="sr-only">{m.blockedNote}</span>}
+    </button>
+    {/* Si no cabe junto al círculo, el selector pasa debajo en lugar de cortarse */}
+    {withControls && (
+      <div className="flex flex-wrap items-center gap-0.5">
+        <DoneButton task={task} blocked={blocked} onChangeStatus={onChangeStatus} />
+        <TaskStatusSelect
+          status={task.status}
+          taskTitle={task.title}
+          size="xs"
+          blocked={blocked}
+          className={`min-h-6 max-w-full ${inWeek ? 'md:max-lg:hidden' : ''}`}
+          onChange={(status) => onChangeStatus(task, status)}
+        />
+      </div>
+    )}
+  </div>
+);
+
+const AgendaEntry: React.FC<
+  EntryActions & { item: AgendaItem; blocked: boolean; withControls: boolean; inWeek?: boolean }
+> = ({ item, blocked, withControls, inWeek, ...actions }) => {
   const time = item.time || m.allDay;
   const meta = [
     m.labels[item.label],
@@ -90,13 +180,17 @@ const AgendaEntry: React.FC<{ item: AgendaItem; onEditTask: (task: TaskItem) => 
     .join(' · ');
 
   const isOccurrence = item.kind === 'occurrence';
+  if (!item.task) return null;
   return (
-    <button
-      type="button"
-      onClick={() => item.task && onEditTask(item.task)}
-      className={`w-full space-y-0.5 rounded-lg border border-l-4 p-2 text-left text-xs hover:bg-slate-50 ${
-        item.context ? CONTEXT_STYLE[item.context] : ''
-      } ${isOccurrence ? 'border-dashed border-slate-300 bg-white/60' : 'border-slate-200 bg-white'}`}
+    <EntryCard
+      {...actions}
+      task={item.task}
+      withControls={withControls && !isOccurrence}
+      inWeek={inWeek}
+      blocked={blocked}
+      className={`${item.context ? CONTEXT_STYLE[item.context] : ''} ${
+        isOccurrence ? 'border-dashed border-slate-300 bg-white/60' : 'border-slate-200 bg-white'
+      }`}
     >
       <span className="block font-mono text-[10px] text-slate-600">{time}</span>
       <span
@@ -107,12 +201,12 @@ const AgendaEntry: React.FC<{ item: AgendaItem; onEditTask: (task: TaskItem) => 
         {!isOccurrence && item.deadline === 'today' && <span className="sr-only">{m.dueToday}</span>}
       </span>
       <span className="block text-[10px] text-slate-500">{meta}</span>
-    </button>
+    </EntryCard>
   );
 };
 
 // Agenda con las tareas con fecha de las dos listas y sus repeticiones previstas
-export const AgendaView: React.FC<AgendaViewProps> = ({ tasks, onEditTask }) => {
+export const AgendaView: React.FC<AgendaViewProps> = ({ tasks, onEditTask, onChangeStatus }) => {
   const now = useNow();
   const [mode, setMode] = useState<AgendaMode>('week');
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
@@ -124,6 +218,19 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ tasks, onEditTask }) => 
   const days = daysFrom(daysStart, mode === 'week' ? 7 : DAYS_VIEW_LENGTH);
   const agenda = buildAgenda(tasks, days, now);
   const overdue = overdueTasks(tasks, now);
+  const byId = tasksById(tasks);
+  const isBlocked = (task?: TaskItem) => Boolean(task && blockerOf(task, byId));
+  const actions = { onEditTask, onChangeStatus };
+  // Los controles de estado van en la primera entrada que se ve de cada tarea (un intervalo sale varios días)
+  const withControls = new Set<string>();
+  const seen = new Set<string>();
+  for (const date of days) {
+    for (const item of agenda.get(date)!) {
+      if (item.kind !== 'task' || !item.task || seen.has(item.task.id)) continue;
+      seen.add(item.task.id);
+      withControls.add(item.key);
+    }
+  }
   const rangeLabel = `${rangeFormat.format(toLocalDate(days[0]))} – ${rangeFormat.format(toLocalDate(days[days.length - 1]))}`;
 
   const moveWeeks = (weeks: number) =>
@@ -238,7 +345,13 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ tasks, onEditTask }) => 
                   <ul className="space-y-1.5">
                     {dayItems.map((item) => (
                       <li key={item.key}>
-                        <AgendaEntry item={item} onEditTask={onEditTask} />
+                        <AgendaEntry
+                          {...actions}
+                          item={item}
+                          blocked={isBlocked(item.task)}
+                          withControls={withControls.has(item.key)}
+                          inWeek
+                        />
                       </li>
                     ))}
                   </ul>
@@ -260,14 +373,16 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ tasks, onEditTask }) => 
               <ul className="space-y-1.5">
                 {overdue.map((task) => (
                   <li key={task.id}>
-                    <button
-                      type="button"
-                      onClick={() => onEditTask(task)}
-                      className={`w-full rounded-lg border border-l-4 border-slate-200 bg-white p-2 text-left text-xs hover:bg-slate-50 ${CONTEXT_STYLE[task.listContext]}`}
+                    <EntryCard
+                      {...actions}
+                      task={task}
+                      withControls
+                      blocked={isBlocked(task)}
+                      className={`border-slate-200 bg-white ${CONTEXT_STYLE[task.listContext]}`}
                     >
                       <span className="block font-semibold wrap-anywhere text-red-600">{task.title}</span>
                       <span className="block text-[10px] text-slate-500">{formatTaskDates(task)}</span>
-                    </button>
+                    </EntryCard>
                   </li>
                 ))}
               </ul>
@@ -299,7 +414,12 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ tasks, onEditTask }) => 
                   <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {items.map((item) => (
                       <li key={item.key} className="min-w-0">
-                        <AgendaEntry item={item} onEditTask={onEditTask} />
+                        <AgendaEntry
+                          {...actions}
+                          item={item}
+                          blocked={isBlocked(item.task)}
+                          withControls={withControls.has(item.key)}
+                        />
                       </li>
                     ))}
                   </ul>

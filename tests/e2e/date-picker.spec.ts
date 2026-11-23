@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openSection, showMoreOptions, signInWithGoogle } from './helpers';
+import { agendaEntry, openSection, showMoreOptions, signInWithGoogle } from './helpers';
 
 const fullDay = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 const longDay = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -80,9 +80,7 @@ test('date fields use a Monday-first calendar and dd/mm/aaaa, with keyboard supp
   await expect(page.getByRole('list', { name: 'Semana' }).getByRole('listitem').first()).toHaveAccessibleName(/^lunes/);
   await page.getByRole('button', { name: 'Por días' }).click();
   await expect(
-    page
-      .getByRole('region', { name: new RegExp(longDay.format(tomorrow), 'i') })
-      .getByRole('button', { name: new RegExp(title) })
+    agendaEntry(page.getByRole('region', { name: new RegExp(longDay.format(tomorrow), 'i') }), title)
   ).toBeVisible();
 });
 

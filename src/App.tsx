@@ -849,36 +849,6 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
     showToast(m.draftRestored);
   };
 
-  const handleSaveTask = (taskData: TaskFormData) => {
-    const now = new Date().toISOString();
-    if (editingTask) {
-      const current = tasks.find((t) => t.id === editingTask.id) ?? editingTask;
-      saveTask(db, uid, {
-        ...current,
-        ...taskData,
-        alarmSetAt: alarmSetAtFor(current, taskData, now),
-        updatedAt: now
-      }).catch(reportError(m.actions.saveTask));
-      showToast(m.taskSaved);
-      setEditingTask(null);
-    } else {
-      const newTask: TaskItem = {
-        ...taskData,
-        alarmSetAt: alarmSetAtFor(null, taskData, now),
-        id: `task-${Date.now()}`,
-        userId: uid,
-        createdAt: now,
-        updatedAt: now,
-        status: 'PENDING'
-      };
-      // Desde un borrador: la tarea y el borrador borrado van juntos
-      (continuingDraft ? saveTaskFromDraft(db, uid, newTask, continuingDraft.id) : saveTask(db, uid, newTask)).catch(
-        reportError(m.actions.saveTask)
-      );
-      showToast(taskData.isSomeday ? m.taskSavedSomeday : m.taskAdded);
-    }
-  };
-
   // "Hecha" archiva la tarea; cualquier otro estado la devuelve a su lista
   // «Deshacer»: comprueba en el servidor que nada ha cambiado y restaura con la hora de ahora (es un cambio nuevo)
   const undo = (attempt: () => Promise<boolean>) => () => {
@@ -891,13 +861,14 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
       });
   };
 
-  const handleChangeStatus = (task: TaskItem, status: TaskStatus) => {
-    if (status === task.status) return;
+  // 'refused': espera a otra tarea abierta (ya lo explica el aviso)
+  const handleChangeStatus = (task: TaskItem, status: TaskStatus): 'applied' | 'refused' | 'unchanged' => {
+    if (status === task.status) return 'unchanged';
     // Bloqueada por otra tarea abierta: no se puede hacer ni empezar todavía
     const blocker = blockerOf(task, tasksById(tasks));
     if (blocker && (status === 'DONE' || status === 'IN_PROGRESS')) {
       showToast(m.waitsFor(blocker.title));
-      return;
+      return 'refused';
     }
     // Tarea recurrente marcada como Hecha o Cancelada: se crea la siguiente repetición (una sola vez por tarea). Cancelar
     // una repetición no termina la serie: para eso se quita la repetición al editarla
@@ -920,7 +891,7 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
         m.closedWithNext(canceled, nextDue, freedNote),
         undo(() => undoTaskChange(db, uid, [done, next], restored(), next.id))
       );
-      return;
+      return 'applied';
     }
     saveTask(db, uid, updated).catch(reportError(m.actions.updateStatus));
     if (closing) {
@@ -932,6 +903,48 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
       );
     } else if (isArchived(task)) {
       showToast(m.taskReactivated);
+    }
+    return 'applied';
+  };
+
+  // status: el estado elegido en el formulario, solo si se cambió allí
+  const handleSaveTask = (taskData: TaskFormData, status?: TaskStatus) => {
+    const now = new Date().toISOString();
+    if (editingTask) {
+      const current = tasks.find((t) => t.id === editingTask.id) ?? editingTask;
+      const edited: TaskItem = {
+        ...current,
+        ...taskData,
+        alarmSetAt: alarmSetAtFor(current, taskData, now),
+        updatedAt: now
+      };
+      // Con un estado nuevo, el cambio de estado guarda también lo editado, con sus reglas y su aviso («Deshacer»
+      // devuelve solo el estado). Si no se puede (espera a otra tarea), se guarda lo demás y queda el aviso de por qué
+      const statusResult = status && status !== current.status ? handleChangeStatus(edited, status) : 'unchanged';
+      if (statusResult !== 'applied') {
+        saveTask(db, uid, edited).catch(reportError(m.actions.saveTask));
+        const blocker = statusResult === 'refused' ? blockerOf(edited, tasksById(tasks)) : undefined;
+        showToast(blocker ? `${m.taskSaved} ${m.waitsFor(blocker.title)}` : m.taskSaved);
+      } else if (status && !isArchivedStatus(status) && !isArchived(current)) {
+        // En progreso, bloqueada o pendiente: el cambio de estado no avisa por sí solo
+        showToast(m.taskSaved);
+      }
+      setEditingTask(null);
+    } else {
+      const newTask: TaskItem = {
+        ...taskData,
+        alarmSetAt: alarmSetAtFor(null, taskData, now),
+        id: `task-${Date.now()}`,
+        userId: uid,
+        createdAt: now,
+        updatedAt: now,
+        status: 'PENDING'
+      };
+      // Desde un borrador: la tarea y el borrador borrado van juntos
+      (continuingDraft ? saveTaskFromDraft(db, uid, newTask, continuingDraft.id) : saveTask(db, uid, newTask)).catch(
+        reportError(m.actions.saveTask)
+      );
+      showToast(taskData.isSomeday ? m.taskSavedSomeday : m.taskAdded);
     }
   };
 
@@ -1491,6 +1504,7 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
               <DeferredSection retry={AgendaView.retry}>
                 <AgendaView
                   tasks={tasks}
+                  onChangeStatus={handleChangeStatus}
                   onEditTask={(task) => {
                     setEditingTask(task);
                     setIsTaskModalOpen(true);

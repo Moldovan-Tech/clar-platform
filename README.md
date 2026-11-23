@@ -279,6 +279,12 @@ La lista completa y numerada de lo que hace la app, con sus requisitos no funcio
 
 - **Dependencias:** `npm audit fix` en la raíz, `functions/` y `tools/eslint`. En las Functions, `uuid`, `glob`, `minimatch` y `rimraf` desaparecen y `gaxios` (6.3.0), `google-gax` y `gcp-metadata` bajan a versiones sin el aviso: quedan sin avisos. En la raíz, `hono`, `@hono/node-server`, `body-parser` y `zod` suben, y `basic-ftp` desaparece (con `proxy-agent`). `firebase-tools` 15.36.0, `eslint` 10.15.0 y `typescript-eslint` 8.72.2; con ESLint 10.15, Node 22.13 o posterior (`engines`). Las dependencias de producción (`npm audit --omit=dev`) de la app y las Functions no tienen avisos. Quedan avisos moderados sin arreglo publicado en herramientas de desarrollo: en la raíz, dentro de `firebase-tools` (`glob`, `minimatch`, `uuid`); en `tools/eslint`, dentro de `typescript-eslint` (`minimatch`).
 
+### El estado, desde la Agenda y en la tarea (1.5.0)
+
+- **Agenda** (`AgendaView`): cada entrada de una tarea, también en «Vencidas», lleva el círculo para marcarla como hecha (o el candado si espera a otra) y `TaskStatusSelect`. La entrada ya no es un solo botón: el contenido es el botón que abre la tarea y los controles van al lado (no puede haber controles dentro de un botón). En la semana, entre `md` y `lg`, el selector se oculta (`md:max-lg:hidden`): las columnas no dan para él. Un intervalo los lleva solo en su primer día visible (no se repiten con el mismo nombre) y las repeticiones previstas no los llevan. Todo pasa por `handleChangeStatus`, como en las listas: dependencias, siguiente repetición, celebración y «Deshacer».
+- **Formulario de la tarea** (`TaskModal`): al editar, el campo «Estado». No forma parte de `TaskFormValues` (los borradores son tareas nuevas); se pasa a `onSaveTask` solo si cambió, y cuenta como cambio sin guardar. `handleSaveTask` lo aplica con `handleChangeStatus` sobre la tarea ya editada, en una sola escritura; `handleChangeStatus` devuelve `'applied' | 'refused' | 'unchanged'`, y si se rechaza (espera a otra tarea) se guarda lo demás con el aviso del porqué.
+- **Pruebas:** en `agenda.spec.ts`, el estado desde la agenda (En progreso, Hecha con «Deshacer» y Cancelada) y que las repeticiones previstas no tienen controles; en `task-lifecycle.spec.ts`, el estado desde el formulario. El helper `agendaEntry` busca el botón que abre una entrada (el del círculo también nombra la tarea).
+
 ---
 
 ## 🛠️ Stack Tecnológico

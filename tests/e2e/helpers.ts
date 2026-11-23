@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { ONBOARDING_VERSION } from '../../src/services/onboarding';
 import { RELEASE_NOTES } from '../../src/services/releaseNotes';
 
@@ -264,6 +264,12 @@ export const openSection = async (page: Page, name: string) => {
 // Marca una tarea como hecha con el círculo de su tarjeta
 export const completeTask = (page: Page, title: string) =>
   page.getByRole('button', { name: `Marcar «${title}» como hecha`, exact: true }).click();
+
+// Una entrada de la agenda: el botón que abre la tarea (el de marcarla como hecha también la nombra, pero sin texto)
+export const agendaEntry = (scope: Page | Locator, title: string) =>
+  scope
+    .getByRole('button', { name: new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) })
+    .filter({ hasText: title });
 
 // Abre el panel «⋯» de una tarea: Editar, Estado, Añadir al calendario y Eliminar
 export const openTaskActions = (page: Page, title: string) =>
