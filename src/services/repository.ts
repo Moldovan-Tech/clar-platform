@@ -114,6 +114,13 @@ export const completeRecurringTask = (db: Firestore, uid: string, done: TaskItem
   return batch.commit();
 };
 
+// Varias tareas en un mismo lote (p. ej. la serie que salta una fecha y la tarea suelta de esa fecha)
+export const saveTasks = (db: Firestore, uid: string, tasks: TaskItem[]) => {
+  const batch = writeBatch(db);
+  for (const task of tasks) batch.set(doc(userCollection(db, uid, 'tasks'), task.id), { ...task, userId: uid });
+  return batch.commit();
+};
+
 // «Deshacer» necesita al servidor: primero se espera a que confirme lo que se acaba de escribir (o se desiste si no
 // hay conexión) y después se comprueba y se restaura en una transacción, para no pisar cambios de otro dispositivo
 const UNDO_SYNC_TIMEOUT_MS = 5_000;

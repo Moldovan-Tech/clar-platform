@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { CalendarDays, Check, ChevronLeft, ChevronRight, Lock, Repeat } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { CalendarDays, Check, ChevronLeft, ChevronRight, Lock, Repeat, Trash2 } from 'lucide-react';
 import { TaskItem, TaskStatus } from '../types';
 import { AgendaItem, buildAgenda, daysFrom, overdueTasks, startOfWeek } from '../services/agenda';
 import { toDateString } from '../services/recurrence';
@@ -38,7 +38,15 @@ const m = messages(
     markDone: (title: string) => `Marcar «${title}» como hecha`,
     markDoneTitle: 'Marcar como hecha',
     blocked: 'Bloqueada',
-    blockedNote: '(bloqueada: espera a otra tarea)'
+    blockedNote: '(bloqueada: espera a otra tarea)',
+    markRepeatDone: (title: string, date: string) => `Marcar «${title}» del ${date} como hecha`,
+    repeatStatus: (title: string, date: string) => `Estado de «${title}» del ${date}`,
+    deleteRepeat: (title: string, date: string) => `Borrar «${title}» del ${date}`,
+    deleteTitle: 'Borrar',
+    deleteOptions: 'Qué repeticiones borrar',
+    deleteOne: 'Solo esta',
+    deleteFollowing: 'Esta y las siguientes',
+    cancel: 'Cancelar'
   },
   {
     labels: {
@@ -67,7 +75,15 @@ const m = messages(
     markDone: (title) => `Mark “${title}” as done`,
     markDoneTitle: 'Mark as done',
     blocked: 'Blocked',
-    blockedNote: '(blocked: waiting for another task)'
+    blockedNote: '(blocked: waiting for another task)',
+    markRepeatDone: (title, date) => `Mark “${title}” on ${date} as done`,
+    repeatStatus: (title, date) => `Status of “${title}” on ${date}`,
+    deleteRepeat: (title, date) => `Delete “${title}” on ${date}`,
+    deleteTitle: 'Delete',
+    deleteOptions: 'Which repeats to delete',
+    deleteOne: 'Only this one',
+    deleteFollowing: 'This and the following',
+    cancel: 'Cancel'
   }
 );
 
@@ -76,6 +92,12 @@ interface AgendaViewProps {
   onEditTask: (task: TaskItem) => void;
   // Cambia el estado con las mismas reglas que las listas (dependencias, repeticiones, «Deshacer»)
   onChangeStatus: (task: TaskItem, status: TaskStatus) => void;
+  // Repetición prevista (`series`, la tarea que la anticipa, y su fecha): al cambiar su estado pasa a ser una tarea suelta
+  onOccurrenceStatus: (series: TaskItem, date: string, status: TaskStatus) => void;
+  // Borrar una repetición prevista: solo esa fecha o también las siguientes
+  onDeleteOccurrence: (series: TaskItem, date: string, following: boolean) => void;
+  // Borrar la repetición actual (una tarea real): solo esta (pasa a la siguiente fecha) o también las siguientes
+  onDeleteRepeat: (task: TaskItem, following: boolean) => void;
 }
 
 type AgendaMode = 'week' | 'days';
@@ -83,6 +105,8 @@ type AgendaMode = 'week' | 'days';
 const DAYS_VIEW_LENGTH = 14;
 const weekdayFormat = new Intl.DateTimeFormat(LOCALE_TAG, { weekday: 'short' });
 const longDayFormat = new Intl.DateTimeFormat(LOCALE_TAG, { weekday: 'long', day: 'numeric', month: 'long' });
+const repeatDayFormat = new Intl.DateTimeFormat(LOCALE_TAG, { day: 'numeric', month: 'long' });
+const repeatDay = (date: string) => repeatDayFormat.format(toLocalDate(date));
 const rangeFormat = new Intl.DateTimeFormat(LOCALE_TAG, { day: 'numeric', month: 'short', year: 'numeric' });
 
 const CONTEXT_STYLE = {
@@ -96,16 +120,15 @@ const titleClass = (item: AgendaItem) =>
 
 interface EntryActions {
   onEditTask: (task: TaskItem) => void;
-  onChangeStatus: (task: TaskItem, status: TaskStatus) => void;
+  onChangeStatus: AgendaViewProps['onChangeStatus'];
+  onOccurrenceStatus: AgendaViewProps['onOccurrenceStatus'];
+  onDeleteOccurrence: AgendaViewProps['onDeleteOccurrence'];
+  onDeleteRepeat: AgendaViewProps['onDeleteRepeat'];
 }
 
-// Controles de estado de una tarea real: completar de un toque (o el candado si espera a otra) y el selector de estado.
-// Marcarla como hecha o cancelada la quita de la agenda (el aviso ofrece «Deshacer»)
-const DoneButton: React.FC<{ task: TaskItem; blocked: boolean; onChangeStatus: EntryActions['onChangeStatus'] }> = ({
-  task,
-  blocked,
-  onChangeStatus
-}) =>
+// Completar de un toque (o el candado si espera a otra). Marcarla como hecha la quita de la agenda (el aviso ofrece
+// «Deshacer»)
+const DoneButton: React.FC<{ label: string; blocked: boolean; onDone: () => void }> = ({ label, blocked, onDone }) =>
   blocked ? (
     <span className="flex h-8 w-8 shrink-0 items-center justify-center" title={m.blocked} aria-hidden="true">
       <Lock className="h-3.5 w-3.5 text-amber-700" />
@@ -113,8 +136,8 @@ const DoneButton: React.FC<{ task: TaskItem; blocked: boolean; onChangeStatus: E
   ) : (
     <button
       type="button"
-      onClick={() => onChangeStatus(task, 'DONE')}
-      aria-label={m.markDone(task.title)}
+      onClick={onDone}
+      aria-label={label}
       title={m.markDoneTitle}
       className="group flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
     >
@@ -127,50 +150,169 @@ const DoneButton: React.FC<{ task: TaskItem; blocked: boolean; onChangeStatus: E
     </button>
   );
 
-// Una entrada: el contenido abre la tarea (un botón) y, debajo, sus controles de estado (no pueden ir dentro del botón;
-// debajo, el título conserva todo el ancho en las columnas estrechas de la semana)
-const EntryCard: React.FC<
-  EntryActions & {
-    task: TaskItem;
-    // Sin controles: una repetición prevista (aún no es una tarea) o los demás días de un intervalo (los lleva el
-    // primero que se ve, para no repetirlos con el mismo nombre)
-    withControls: boolean;
-    // En la semana, entre md y lg las columnas no dan para el selector: solo el círculo (el estado está en la tarea)
-    inWeek?: boolean;
-    blocked: boolean;
-    className: string;
-    children: React.ReactNode;
-  }
-> = ({ task, withControls, inWeek = false, blocked, className, children, onEditTask, onChangeStatus }) => (
+// Borrar una repetición: la papelera abre, dentro de la propia entrada, «Solo esta» y «Esta y las siguientes» (dentro y
+// no flotando: en las columnas estrechas de la semana, un menú flotante se cortaría). Escape la cierra
+const DeleteRepeat: React.FC<{ label: string; onDelete: (following: boolean) => void }> = ({ label, onDelete }) => {
+  const [open, setOpen] = useState(false);
+  const toggle = useRef<HTMLButtonElement>(null);
+  // Tras borrar, la entrada desaparece o cambia de día: el foco pasa a su día, que sigue ahí
+  const remove = (following: boolean) => {
+    const dayBox = toggle.current?.closest<HTMLElement>('[data-agenda-day]');
+    onDelete(following);
+    requestAnimationFrame(() => dayBox?.focus());
+  };
+  const close = () => {
+    setOpen(false);
+    toggle.current?.focus();
+  };
+  const onEscape = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Escape') return;
+    e.stopPropagation();
+    close();
+  };
+  // En las columnas estrechas de la semana, las palabras se parten con guion, no por cualquier letra
+  const choice =
+    'min-h-6 w-full rounded-md px-1 py-1 text-left text-[10px] font-semibold [overflow-wrap:normal] hyphens-auto';
+  return (
+    <>
+      <button
+        ref={toggle}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        onKeyDown={(e) => open && onEscape(e)}
+        aria-label={label}
+        aria-expanded={open}
+        title={m.deleteTitle}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-red-50 hover:text-red-700"
+      >
+        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+      </button>
+      {open && (
+        <div
+          role="group"
+          aria-label={m.deleteOptions}
+          className="basis-full space-y-0.5 rounded-md border border-red-200 bg-red-50/60 p-0.5"
+        >
+          <button
+            type="button"
+            className={`${choice} text-red-700 hover:bg-red-100`}
+            onKeyDown={onEscape}
+            onClick={() => remove(false)}
+          >
+            {m.deleteOne}
+          </button>
+          <button
+            type="button"
+            className={`${choice} text-red-700 hover:bg-red-100`}
+            onKeyDown={onEscape}
+            onClick={() => remove(true)}
+          >
+            {m.deleteFollowing}
+          </button>
+          <button
+            type="button"
+            className={`${choice} text-slate-600 hover:bg-slate-100`}
+            onKeyDown={onEscape}
+            onClick={close}
+          >
+            {m.cancel}
+          </button>
+        </div>
+      )}
+    </>
+  );
+};
+
+// Una entrada: el contenido abre la tarea (un botón) y, debajo, sus controles (no pueden ir dentro del botón; debajo,
+// el título conserva todo el ancho en las columnas estrechas de la semana)
+const EntryCard: React.FC<{
+  onOpen: () => void;
+  blocked: boolean;
+  className: string;
+  children: React.ReactNode;
+  controls?: React.ReactNode;
+}> = ({ onOpen, blocked, className, children, controls }) => (
   <div className={`space-y-1 rounded-lg border border-l-4 p-1 text-xs ${className}`}>
     <button
       type="button"
-      onClick={() => onEditTask(task)}
+      onClick={onOpen}
       className="block w-full space-y-0.5 rounded-md p-1 text-left hover:bg-slate-50"
     >
       {children}
       {blocked && <span className="sr-only">{m.blockedNote}</span>}
     </button>
     {/* Si no cabe junto al círculo, el selector pasa debajo en lugar de cortarse */}
-    {withControls && (
-      <div className="flex flex-wrap items-center gap-0.5">
-        <DoneButton task={task} blocked={blocked} onChangeStatus={onChangeStatus} />
-        <TaskStatusSelect
-          status={task.status}
-          taskTitle={task.title}
-          size="xs"
-          blocked={blocked}
-          className={`min-h-6 max-w-full ${inWeek ? 'md:max-lg:hidden' : ''}`}
-          onChange={(status) => onChangeStatus(task, status)}
-        />
-      </div>
-    )}
+    {controls && <div className="flex flex-wrap items-center gap-0.5">{controls}</div>}
   </div>
 );
 
+// En la semana, entre md y lg las columnas no dan para el selector: solo el círculo (el estado está en la tarea)
+const selectClass = (inWeek: boolean) => `min-h-6 max-w-full ${inWeek ? 'md:max-lg:hidden' : ''}`;
+
+// Controles de una tarea real: círculo, selector de estado y, si se repite, la papelera de la repetición actual
+const TaskControls: React.FC<EntryActions & { task: TaskItem; blocked: boolean; inWeek: boolean }> = ({
+  task,
+  blocked,
+  inWeek,
+  onChangeStatus,
+  onDeleteRepeat
+}) => (
+  <>
+    <DoneButton label={m.markDone(task.title)} blocked={blocked} onDone={() => onChangeStatus(task, 'DONE')} />
+    <TaskStatusSelect
+      status={task.status}
+      taskTitle={task.title}
+      size="xs"
+      blocked={blocked}
+      className={selectClass(inWeek)}
+      onChange={(status) => onChangeStatus(task, status)}
+    />
+    {/* Solo la última de la serie: una repetición reactivada ya tiene sucesora, que lleva la serie */}
+    {task.recurrence && task.dueDate && !task.nextOccurrenceId && (
+      <DeleteRepeat
+        label={m.deleteRepeat(task.title, repeatDay(task.dueDate))}
+        onDelete={(following) => onDeleteRepeat(task, following)}
+      />
+    )}
+  </>
+);
+
+// Controles de una repetición prevista: los mismos, para esa fecha. Aún no es una tarea: no espera a ninguna (cada
+// repetición deja de esperar a la tarea a la que esperaba la serie) y está pendiente
+const OccurrenceControls: React.FC<EntryActions & { series: TaskItem; date: string; inWeek: boolean }> = ({
+  series,
+  date,
+  inWeek,
+  onOccurrenceStatus,
+  onDeleteOccurrence
+}) => {
+  const day = repeatDay(date);
+  return (
+    <>
+      <DoneButton
+        label={m.markRepeatDone(series.title, day)}
+        blocked={false}
+        onDone={() => onOccurrenceStatus(series, date, 'DONE')}
+      />
+      <TaskStatusSelect
+        status="PENDING"
+        taskTitle={series.title}
+        label={m.repeatStatus(series.title, day)}
+        size="xs"
+        className={selectClass(inWeek)}
+        onChange={(status) => onOccurrenceStatus(series, date, status)}
+      />
+      <DeleteRepeat
+        label={m.deleteRepeat(series.title, day)}
+        onDelete={(following) => onDeleteOccurrence(series, date, following)}
+      />
+    </>
+  );
+};
+
 const AgendaEntry: React.FC<
   EntryActions & { item: AgendaItem; blocked: boolean; withControls: boolean; inWeek?: boolean }
-> = ({ item, blocked, withControls, inWeek, ...actions }) => {
+> = ({ item, blocked, withControls, inWeek = false, ...actions }) => {
   const time = item.time || m.allDay;
   const meta = [
     m.labels[item.label],
@@ -180,14 +322,20 @@ const AgendaEntry: React.FC<
     .join(' · ');
 
   const isOccurrence = item.kind === 'occurrence';
-  if (!item.task) return null;
+  const task = item.task;
+  if (!task) return null;
+  // Sin controles: los demás días de un intervalo (los lleva el primero que se ve, para no repetirlos con el mismo
+  // nombre). Cada repetición prevista lleva los suyos, para su fecha
+  const controls = isOccurrence ? (
+    <OccurrenceControls {...actions} series={task} date={item.date} inWeek={inWeek} />
+  ) : withControls ? (
+    <TaskControls {...actions} task={task} blocked={blocked} inWeek={inWeek} />
+  ) : undefined;
   return (
     <EntryCard
-      {...actions}
-      task={item.task}
-      withControls={withControls && !isOccurrence}
-      inWeek={inWeek}
-      blocked={blocked}
+      onOpen={() => actions.onEditTask(task)}
+      controls={controls}
+      blocked={blocked && !isOccurrence}
       className={`${item.context ? CONTEXT_STYLE[item.context] : ''} ${
         isOccurrence ? 'border-dashed border-slate-300 bg-white/60' : 'border-slate-200 bg-white'
       }`}
@@ -206,7 +354,14 @@ const AgendaEntry: React.FC<
 };
 
 // Agenda con las tareas con fecha de las dos listas y sus repeticiones previstas
-export const AgendaView: React.FC<AgendaViewProps> = ({ tasks, onEditTask, onChangeStatus }) => {
+export const AgendaView: React.FC<AgendaViewProps> = ({
+  tasks,
+  onEditTask,
+  onChangeStatus,
+  onOccurrenceStatus,
+  onDeleteOccurrence,
+  onDeleteRepeat
+}) => {
   const now = useNow();
   const [mode, setMode] = useState<AgendaMode>('week');
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
@@ -220,7 +375,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ tasks, onEditTask, onCha
   const overdue = overdueTasks(tasks, now);
   const byId = tasksById(tasks);
   const isBlocked = (task?: TaskItem) => Boolean(task && blockerOf(task, byId));
-  const actions = { onEditTask, onChangeStatus };
+  const actions = { onEditTask, onChangeStatus, onOccurrenceStatus, onDeleteOccurrence, onDeleteRepeat };
   // Los controles de estado van en la primera entrada que se ve de cada tarea (un intervalo sale varios días)
   const withControls = new Set<string>();
   const seen = new Set<string>();
@@ -327,6 +482,8 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ tasks, onEditTask, onCha
             return (
               <li
                 key={date}
+                data-agenda-day
+                tabIndex={-1}
                 aria-current={isToday ? 'date' : undefined}
                 aria-label={longDayFormat.format(toLocalDate(date))}
                 className={`min-h-28 min-w-0 space-y-2 rounded-2xl border p-2 ${isToday ? 'border-indigo-400 bg-indigo-50/40' : 'border-slate-200 bg-slate-50/60'}`}
@@ -374,9 +531,8 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ tasks, onEditTask, onCha
                 {overdue.map((task) => (
                   <li key={task.id}>
                     <EntryCard
-                      {...actions}
-                      task={task}
-                      withControls
+                      onOpen={() => onEditTask(task)}
+                      controls={<TaskControls {...actions} task={task} blocked={isBlocked(task)} inWeek={false} />}
                       blocked={isBlocked(task)}
                       className={`border-slate-200 bg-white ${CONTEXT_STYLE[task.listContext]}`}
                     >
@@ -397,6 +553,8 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ tasks, onEditTask, onCha
             return (
               <section
                 key={date}
+                data-agenda-day
+                tabIndex={-1}
                 aria-labelledby={`agenda-day-${date}`}
                 aria-current={isToday ? 'date' : undefined}
                 className={`space-y-2 rounded-2xl border ${items.length ? 'p-4' : 'px-4 py-2.5'} ${

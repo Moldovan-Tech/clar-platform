@@ -17,6 +17,8 @@ interface TaskStatusSelectProps {
   blocked?: boolean;
   // Id del texto que explica el campo (aria-describedby)
   describedBy?: string;
+  // Nombre accesible propio (p. ej. con la fecha de una repetición); si no, «Estado de «título»»
+  label?: string;
   className?: string;
 }
 
@@ -30,6 +32,7 @@ export const TaskStatusSelect: React.FC<TaskStatusSelectProps> = ({
   size = 'sm',
   blocked = false,
   describedBy,
+  label,
   className = ''
 }) => {
   const current = TASK_STATUSES.find((s) => s.value === status) ?? TASK_STATUSES[0];
@@ -37,7 +40,7 @@ export const TaskStatusSelect: React.FC<TaskStatusSelectProps> = ({
     <select
       value={status}
       onChange={(e) => onChange(e.target.value as TaskStatus)}
-      aria-label={m.statusOf(taskTitle)}
+      aria-label={label ?? m.statusOf(taskTitle)}
       aria-describedby={describedBy}
       className={`cursor-pointer rounded-lg border font-semibold focus:ring-2 focus:ring-indigo-400 focus:outline-none ${current.className} ${
         size === 'xs' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-[11px]'

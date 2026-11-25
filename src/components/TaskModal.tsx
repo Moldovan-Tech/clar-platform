@@ -33,7 +33,9 @@ import {
   nextOccurrence,
   nthOfMonth,
   repeatUnit,
-  toDateString
+  sameRule,
+  toDateString,
+  withSkip
 } from '../services/recurrence';
 import { messages } from '../i18n/locale';
 
@@ -881,7 +883,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         from: fromCompletion ? 'COMPLETION' : undefined
       })
     : undefined;
-  const recurrence = built?.monthDay !== undefined ? { ...built, monthDay: anchorDay } : built;
+  const rule = built?.monthDay !== undefined ? { ...built, monthDay: anchorDay } : built;
+  // Las fechas que la serie salta (borradas o sueltas desde la Agenda) siguen mientras la regla sea la misma
+  const recurrence =
+    rule && storedRecurrence?.skip && sameRule(storedRecurrence, rule)
+      ? withSkip(rule, storedRecurrence.skip, seriesStart)
+      : rule;
   const firstRepetition = recurrence ? firstOccurrence(seriesStart, recurrence) : null;
   // La siguiente si se completa el día de la primera (contando desde que se hace, depende de ese día)
   const nextRepetition =

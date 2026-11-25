@@ -102,6 +102,9 @@ export interface Recurrence {
   nth?: number; // NTH_WEEKDAY: 1–4
   weekday?: number; // NTH_WEEKDAY y LAST_WEEKDAY: 0 = domingo … 6 = sábado
   until?: string; // YYYY-MM-DD: sin repeticiones después de esta fecha (opcional)
+  // YYYY-MM-DD: fechas de la serie que no se repiten (borradas desde la Agenda o convertidas en una tarea suelta al
+  // cambiar su estado). Solo las fechas fijas; ordenadas y sin las anteriores a la repetición actual
+  skip?: string[];
   // DAILY y WEEKLY: la siguiente vence N días o semanas después del día en que se hace (sin días de la semana). Sin
   // él, en fechas fijas desde el inicio de la serie (también las de antes de 1.1.0)
   from?: 'COMPLETION';
