@@ -23,12 +23,13 @@ import {
   TaskFormValues,
   UserProfile
 } from './types';
-import { formatDay, formatTaskDates, isArchived, isArchivedStatus, withStatus } from './services/tasks';
-import { nextRecurringTask } from './services/recurrence';
+import { TASK_STATUSES, formatDay, formatTaskDates, isArchived, isArchivedStatus, withStatus } from './services/tasks';
+import { endSeriesBefore, nextRecurringTask, occurrenceTask, skipCurrent, skipOccurrence } from './services/recurrence';
 import { forceSync, signOutAndClearCache, type FirebaseServices } from './services/firebase';
 import {
   appendWheelLog,
   completeRecurringTask,
+  saveTasks,
   deleteTask,
   undoTaskChange,
   restoreDeletedTask,
@@ -253,6 +254,7 @@ const m = messages(
       saveProject: 'guardar el proyecto',
       deleteProject: 'eliminar el proyecto',
       deleteTask: 'eliminar la tarea',
+      saveRepeat: 'guardar la repetición',
       saveAssessment: 'guardar la evaluación',
       saveFeature: 'guardar la función extra',
       saveAreas: 'guardar las áreas',
@@ -296,6 +298,15 @@ const m = messages(
     projectReactivated: 'Proyecto reactivado.',
     projectDeleted: 'Proyecto eliminado. Sus tareas siguen en la meta.',
     taskDeleted: 'Tarea eliminada.',
+    // Repeticiones desde la Agenda
+    repeatClosed: (canceled: boolean, date: string) =>
+      `Repetición del ${date} ${canceled ? 'cancelada' : 'hecha'} y archivada.`,
+    repeatSet: (date: string, status: string) =>
+      `La repetición del ${date} pasa a «${status}» y queda como una tarea aparte.`,
+    repeatDeleted: (date: string) => `Repetición del ${date} borrada.`,
+    repeatsEnded: (date: string) => `Borradas las repeticiones desde el ${date}: la serie termina el día anterior.`,
+    currentSkipped: (next: string) => `Repetición borrada. Siguiente: ${next}.`,
+    seriesDeleted: 'Tarea eliminada, con sus repeticiones siguientes.',
     // Nombre de una evaluación de la Rueda sin nombre, con su fecha
     assessment: (date: string) => `Evaluación ${date}`,
     assessmentSaved: 'Evaluación guardada.',
@@ -347,6 +358,7 @@ const m = messages(
       saveProject: 'save the project',
       deleteProject: 'delete the project',
       deleteTask: 'delete the task',
+      saveRepeat: 'save the repeat',
       saveAssessment: 'save the assessment',
       saveFeature: 'save the extra feature',
       saveAreas: 'save the areas',
@@ -390,6 +402,12 @@ const m = messages(
     projectReactivated: 'Project reactivated.',
     projectDeleted: 'Project deleted. Its tasks stay in the goal.',
     taskDeleted: 'Task deleted.',
+    repeatClosed: (canceled, date) => `Repeat on ${date} ${canceled ? 'canceled' : 'done'} and archived.`,
+    repeatSet: (date, status) => `The repeat on ${date} is now “${status}” and becomes a separate task.`,
+    repeatDeleted: (date) => `Repeat on ${date} deleted.`,
+    repeatsEnded: (date) => `Repeats from ${date} on deleted: the series ends the day before.`,
+    currentSkipped: (next) => `Repeat deleted. Next: ${next}.`,
+    seriesDeleted: 'Task deleted, with its later repeats.',
     assessment: (date) => `Assessment ${date}`,
     assessmentSaved: 'Assessment saved.',
     importedItems: (n) => `${n} ${n === 1 ? 'item' : 'items'}`,
@@ -1012,6 +1030,60 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
     );
   };
 
+  // REPETICIONES DESDE LA AGENDA. Una repetición prevista aún no es una tarea: al cambiar su estado se convierte en una
+  // tarea suelta de ese día y la serie la salta. «Deshacer» devuelve la serie como estaba y quita la tarea suelta
+  const restoredNow = (task: TaskItem) => ({ ...task, updatedAt: new Date().toISOString() });
+  const dueText = (task: TaskItem) =>
+    task.dueDate ? `${formatDay(task.dueDate)}${task.dueTime ? `, ${task.dueTime}` : ''}` : '';
+  const handleOccurrenceStatus = (series: TaskItem, date: string, status: TaskStatus) => {
+    if (status === 'PENDING' || !series.recurrence) return;
+    const now = new Date();
+    const fresh = occurrenceTask(series, date, now);
+    // Si esa fecha ya se convirtió antes (y la serie volvió a incluirla al cambiar su regla), no se pisa aquella tarea
+    const single = withStatus(
+      tasks.some((t) => t.id === fresh.id) ? { ...fresh, id: `${fresh.id}-${now.getTime()}` } : fresh,
+      status,
+      now
+    );
+    const skipped = skipOccurrence(series, date, now);
+    saveTasks(db, uid, [skipped, single]).catch(reportError(m.actions.saveRepeat));
+    const label = TASK_STATUSES.find((s) => s.value === status)?.label ?? status;
+    showToast(
+      isArchivedStatus(status)
+        ? m.repeatClosed(status === 'CANCELLED', formatDay(date))
+        : m.repeatSet(formatDay(date), label),
+      undo(() => undoTaskChange(db, uid, [skipped, single], restoredNow(series), single.id))
+    );
+  };
+  // Borrar una repetición prevista: solo esa fecha, o esa y las siguientes (la serie termina el día antes)
+  const handleDeleteOccurrence = (series: TaskItem, date: string, following: boolean) => {
+    if (!series.recurrence) return;
+    const updated = following ? endSeriesBefore(series, date) : skipOccurrence(series, date);
+    saveTask(db, uid, updated).catch(reportError(m.actions.saveRepeat));
+    showToast(
+      following ? m.repeatsEnded(formatDay(date)) : m.repeatDeleted(formatDay(date)),
+      undo(() => undoTaskChange(db, uid, [updated], restoredNow(series)))
+    );
+  };
+  // Borrar la repetición actual (una tarea real): solo esta pasa a la siguiente fecha sin quedar hecha; con las
+  // siguientes (o si era la última), se elimina la tarea y con ella la serie
+  const handleDeleteRepeat = (task: TaskItem, following: boolean) => {
+    const moved = following ? null : skipCurrent(task);
+    if (!moved) {
+      deleteTask(db, uid, task.id).catch(reportError(m.actions.deleteTask));
+      showToast(
+        following ? m.seriesDeleted : m.taskDeleted,
+        undo(() => restoreDeletedTask(db, uid, restoredNow(task)))
+      );
+      return;
+    }
+    saveTask(db, uid, moved).catch(reportError(m.actions.saveRepeat));
+    showToast(
+      m.currentSkipped(dueText(moved)),
+      undo(() => undoTaskChange(db, uid, [moved], restoredNow(task)))
+    );
+  };
+
   const handleAppendWheelSnapshot = (scores: Record<WheelCategory, number>, label?: string) => {
     const now = new Date();
     const log: WheelOfLifeLog = {
@@ -1505,6 +1577,9 @@ export default function App({ user, services, isAdmin = false }: AppProps) {
                 <AgendaView
                   tasks={tasks}
                   onChangeStatus={handleChangeStatus}
+                  onOccurrenceStatus={handleOccurrenceStatus}
+                  onDeleteOccurrence={handleDeleteOccurrence}
+                  onDeleteRepeat={handleDeleteRepeat}
                   onEditTask={(task) => {
                     setEditingTask(task);
                     setIsTaskModalOpen(true);

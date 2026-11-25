@@ -24,6 +24,32 @@ const released = (year: number, month: number) => monthFormat.format(Date.UTC(ye
 
 export const RELEASE_NOTES: readonly ReleaseNote[] = [
   {
+    version: '1.6.0',
+    month: released(2026, 11),
+    changes: [
+      messages(
+        {
+          title: 'Cada repetición, con su estado',
+          text: 'Las repeticiones previstas de la Agenda también tienen su círculo y su selector de estado. Al cambiarlo, esa repetición pasa a ser una tarea de ese día, y la serie sigue igual en los demás. «Deshacer» la devuelve.'
+        },
+        {
+          title: 'Each repeat, with its status',
+          text: 'Upcoming repeats in the Agenda also have their circle and their status selector. When you change it, that repeat becomes a task for that day, and the series stays the same on the other days. “Undo” brings it back.'
+        }
+      ),
+      messages(
+        {
+          title: 'Borra una repetición o las siguientes',
+          text: 'Con la papelera de una repetición eliges «Solo esta» o «Esta y las siguientes». Borrar solo la actual la pasa a la siguiente fecha; con las siguientes, la serie termina antes.'
+        },
+        {
+          title: 'Delete one repeat or the following ones',
+          text: 'With the bin on a repeat you choose “Only this one” or “This and the following”. Deleting only the current one moves it to the next date; with the following ones, the series ends earlier.'
+        }
+      )
+    ]
+  },
+  {
     version: '1.5.0',
     month: released(2026, 11),
     changes: [

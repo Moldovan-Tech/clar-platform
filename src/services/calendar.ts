@@ -32,6 +32,8 @@ export interface CalendarEvent {
   // Series con hora: zona horaria del dispositivo. Sus horas van en hora local con esta zona, no en UTC: así la regla
   // (p. ej. los lunes) se aplica al día local y la hora no se mueve con el cambio de horario
   timeZone?: string;
+  // Series: fechas (YYYY-MM-DD) que la serie salta, a la misma hora que su inicio (solo en el .ics)
+  exdates?: string[];
   // Alarma de la tarea (solo en el .ics): minutos antes del inicio o del final del evento (negativos: después)
   alarm?: { minutesBefore: number; related: 'START' | 'END' };
 }
@@ -87,7 +89,8 @@ export const buildCalendarEvent = (
     uid: `${task.id}@neuroproductividad`,
     title: task.title,
     description,
-    ...(rrule ? { rrule, ...(allDay || !timeZone ? {} : { timeZone }) } : {})
+    ...(rrule ? { rrule, ...(allDay || !timeZone ? {} : { timeZone }) } : {}),
+    ...(rrule && task.recurrence?.skip?.length ? { exdates: task.recurrence.skip.filter((d) => d > dueDate) } : {})
   };
 
   // La alarma se cuenta desde un borde del evento (en una serie, la misma para cada repetición): el que marca el plazo
@@ -283,6 +286,19 @@ export const buildVtimezone = (timeZone: string, from: Date) => {
   return [...lines, 'END:VTIMEZONE'];
 };
 
+// EXDATE: cada fecha saltada, a la hora del inicio de la serie (en su zona o en UTC). Una serie nunca es de día
+// completo: cada repetición ocupa su día (sin intervalo)
+const exdateLine = (event: CalendarEvent) => {
+  const dates = event.exdates ?? [];
+  const at = (date: string) => {
+    const [y, mo, d] = date.split('-').map(Number);
+    return new Date(y, mo - 1, d, event.start.getHours(), event.start.getMinutes(), event.start.getSeconds());
+  };
+  return event.timeZone
+    ? `EXDATE;TZID=${event.timeZone}:${dates.map((d) => localStamp(at(d))).join(',')}`
+    : `EXDATE:${dates.map((d) => utcStamp(at(d))).join(',')}`;
+};
+
 export const buildIcs = (event: CalendarEvent, now = new Date()) => {
   const timing = event.allDay
     ? [`DTSTART;VALUE=DATE:${localDay(event.start)}`, `DTEND;VALUE=DATE:${localDay(event.end)}`]
@@ -304,6 +320,7 @@ export const buildIcs = (event: CalendarEvent, now = new Date()) => {
     `DTSTAMP:${utcStamp(now)}`,
     ...timing,
     ...(event.rrule ? [event.rrule] : []),
+    ...(event.rrule && event.exdates?.length ? [exdateLine(event)] : []),
     `SUMMARY:${escapeIcsText(event.title)}`,
     `DESCRIPTION:${escapeIcsText(event.description)}`,
     ...(event.alarm

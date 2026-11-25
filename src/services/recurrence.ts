@@ -93,7 +93,7 @@ const completionStep = (rec: Recurrence) => intervalOf(rec) * (rec.frequency ===
 export const repeatUnit = (frequency: RecurrenceFrequency, n: number) => m.units[frequency][n === 1 ? 0 : 1];
 
 // Siguiente fecha después de `from` según la regla (sin comprobar `until` ni el día de hoy)
-const stepAfter = (from: Date, rec: Recurrence): Date => {
+const ruleStepAfter = (from: Date, rec: Recurrence): Date => {
   const n = intervalOf(rec);
   switch (rec.frequency) {
     case 'DAILY':
@@ -119,6 +119,38 @@ const stepAfter = (from: Date, rec: Recurrence): Date => {
       return new Date(y, from.getMonth(), Math.min(rec.monthDay ?? from.getDate(), daysInMonth(y, from.getMonth())));
     }
   }
+};
+
+// Fechas que la serie salta (Recurrence.skip)
+export const isSkipped = (rec: Recurrence, date: string) => Boolean(rec.skip?.includes(date));
+
+// Siguiente fecha de la serie después de `from`, sin las fechas saltadas (con un límite de seguridad)
+const stepAfter = (from: Date, rec: Recurrence): Date => {
+  let next = ruleStepAfter(from, rec);
+  for (let guard = 0; rec.skip?.length && isSkipped(rec, toDateString(next)) && guard < 1_000; guard++)
+    next = ruleStepAfter(next, rec);
+  return next;
+};
+
+// Misma regla (las mismas fechas), sin contar el final ni las fechas saltadas
+export const sameRule = (a: Recurrence, b: Recurrence) => {
+  const rule = ({ until: _until, skip: _skip, ...r }: Recurrence) =>
+    JSON.stringify({ ...r, weekdays: r.weekdays ? [...r.weekdays].sort() : undefined }, Object.keys(r).sort());
+  return rule(a) === rule(b);
+};
+
+// Las fechas saltadas, ordenadas, sin repetir y solo las posteriores a `after` (las demás ya no importan) y hasta el
+// fin de la serie. Sin ninguna, no queda el campo
+export const SKIP_MAX = 1000;
+export const withSkip = (rec: Recurrence, dates: string[], after: string): Recurrence => {
+  const { skip: _skip, ...rest } = rec;
+  // Contando desde que se hace no hay fechas que saltar. Como mucho SKIP_MAX, las más próximas
+  if (repeatsFromCompletion(rec)) return rest;
+  const kept = [...new Set(dates)]
+    .filter((d) => d > after && (!rec.until || d <= rec.until))
+    .sort()
+    .slice(0, SKIP_MAX);
+  return kept.length ? { ...rest, skip: kept } : rest;
 };
 
 // Primera fecha de la serie el día `from` o después, con la regla anclada en `from` (inicio de la repetición).
@@ -256,8 +288,71 @@ export const nextRecurringTask = (task: TaskItem, now = new Date()): TaskItem | 
     id: successorId(task.id),
     status: 'PENDING',
     dueDate: nextDue,
+    // Las fechas saltadas que ya quedaron atrás no se arrastran
+    ...(task.recurrence.skip ? { recurrence: withSkip(task.recurrence, task.recurrence.skip, nextDue) } : {}),
     observations: task.observations.map((o) => (o.type === 'checklist' ? { ...o, completed: false } : o)),
     createdAt: now.toISOString(),
+    updatedAt: now.toISOString()
+  };
+};
+
+// Una repetición prevista convertida en tarea suelta (al cambiar su estado desde la Agenda): la misma tarea con esa
+// fecha, sin repetición ni fecha de inicio, con la lista de comprobación sin marcar. Su id depende de la serie y la
+// fecha: dos pestañas que la conviertan a la vez escriben el mismo documento
+export const occurrenceTaskId = (seriesId: string, date: string) =>
+  `task-o${cyrb53(`${seriesId}:${date}`).toString(36)}`;
+export const occurrenceTask = (series: TaskItem, date: string, now = new Date()): TaskItem => {
+  const {
+    doneAt: _doneAt,
+    nextOccurrenceId: _nextOccurrenceId,
+    startDate: _startDate,
+    dependsOn: _dependsOn,
+    recurrence: _recurrence,
+    ...rest
+  } = series;
+  return {
+    ...rest,
+    id: occurrenceTaskId(series.id, date),
+    status: 'PENDING',
+    dueDate: date,
+    observations: series.observations.map((o) => (o.type === 'checklist' ? { ...o, completed: false } : o)),
+    ...(series.alarmTime ? { alarmSetAt: now.toISOString() } : {}),
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString()
+  };
+};
+
+// La serie sin la repetición del día `date` (borrada o convertida en tarea suelta)
+export const skipOccurrence = (series: TaskItem, date: string, now = new Date()): TaskItem => {
+  const rec = series.recurrence!;
+  return {
+    ...series,
+    recurrence: withSkip(rec, [...(rec.skip ?? []), date], series.dueDate ?? ''),
+    updatedAt: now.toISOString()
+  };
+};
+
+// La serie termina el día antes de `date`: sin esa repetición ni las siguientes
+export const endSeriesBefore = (series: TaskItem, date: string, now = new Date()): TaskItem => {
+  const until = toDateString(addDays(toLocalDate(date), -1));
+  const rec = { ...series.recurrence!, until };
+  return { ...series, recurrence: withSkip(rec, rec.skip ?? [], series.dueDate ?? ''), updatedAt: now.toISOString() };
+};
+
+// La repetición actual (una tarea real) pasa a la siguiente fecha de la serie, pendiente, sin quedar como hecha. null si
+// era la última
+export const skipCurrent = (task: TaskItem, now = new Date()): TaskItem | null => {
+  if (!task.recurrence || !task.dueDate) return null;
+  const nextDue = nextOccurrence(task.dueDate, task.recurrence, now, task.dueTime);
+  if (!nextDue) return null;
+  const { doneAt: _doneAt, ...rest } = task;
+  return {
+    ...rest,
+    status: 'PENDING',
+    dueDate: nextDue,
+    recurrence: withSkip(task.recurrence, task.recurrence.skip ?? [], nextDue),
+    observations: task.observations.map((o) => (o.type === 'checklist' ? { ...o, completed: false } : o)),
+    ...(task.alarmTime ? { alarmSetAt: now.toISOString() } : {}),
     updatedAt: now.toISOString()
   };
 };

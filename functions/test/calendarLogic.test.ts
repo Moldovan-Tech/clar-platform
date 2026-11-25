@@ -48,6 +48,13 @@ describe('calendar events on the server', () => {
       'RRULE:FREQ=WEEKLY;INTERVAL=1;WKST=MO;BYDAY=FR'
     ]);
     assert.equal(buildTaskEvent({ ...due, recurrence, status: 'DONE' }, MADRID, URL)?.recurrence, undefined);
+    // Las fechas que la serie salta (borradas o sueltas en la app): EXDATE a la hora local del inicio, solo las
+    // posteriores a la actual, sin repetir y en orden; lo que no es un día se ignora
+    const skip = ['2026-10-30', '2026-10-09', '2026-10-23', '2026-10-23', 'mañana'];
+    assert.deepEqual(buildTaskEvent({ ...due, recurrence: { ...recurrence, skip } }, MADRID, URL)?.recurrence, [
+      'RRULE:FREQ=WEEKLY;INTERVAL=1;WKST=MO;BYDAY=FR',
+      'EXDATE;TZID=Europe/Madrid:20261023T120000,20261030T120000'
+    ]);
     // Una repetición que no vale no rompe el evento: queda suelto
     assert.equal(buildTaskEvent({ ...due, recurrence: { frequency: 'HOURLY' } }, MADRID, URL)?.recurrence, undefined);
   });

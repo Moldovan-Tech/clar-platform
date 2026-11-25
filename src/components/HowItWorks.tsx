@@ -135,7 +135,8 @@ const m = messages(
         title: 'Agenda',
         points: [
           'Vista semanal (de lunes a domingo) y por días con las tareas con fecha de tus dos listas, los intervalos y las próximas repeticiones de las tareas que se repiten en fechas fijas.',
-          'En la vista por días, las tareas vencidas aparecen aparte. Pulsa una tarea para editarla, márcala como hecha con su círculo o cambia su estado con su selector.'
+          'En la vista por días, las tareas vencidas aparecen aparte. Pulsa una tarea para editarla, márcala como hecha con su círculo o cambia su estado con su selector.',
+          'Las repeticiones previstas también tienen su círculo y su selector: al cambiar el estado, esa repetición pasa a ser una tarea de ese día. Con la papelera de una tarea que se repite, borras solo esa repetición o también las siguientes.'
         ]
       }
     },
@@ -294,7 +295,8 @@ const m = messages(
         title: 'Agenda',
         points: [
           'Weekly view (Monday to Sunday) and daily view with the dated tasks from both your lists, date ranges and the next repeats of tasks that repeat on fixed dates.',
-          'In the daily view, overdue tasks appear separately. Press a task to edit it, mark it as done with its circle or change its status with its selector.'
+          'In the daily view, overdue tasks appear separately. Press a task to edit it, mark it as done with its circle or change its status with its selector.',
+          'Upcoming repeats also have their circle and selector: when you change the status, that repeat becomes a task for that day. With the bin on a repeating task, you delete only that repeat or the following ones too.'
         ]
       }
     },

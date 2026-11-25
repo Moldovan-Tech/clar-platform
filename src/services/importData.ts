@@ -13,7 +13,7 @@ import type { UserCollection, UserData } from './repository';
 import { GOAL_TITLE_MAX, GOAL_WHY_MAX } from './goals';
 import { PROJECT_DESCRIPTION_MAX, PROJECT_TITLE_MAX } from './projects';
 import { AREA_LABEL_MAX, DEFAULT_AREAS, MAX_VISIBLE_AREAS, isAreaId, validateAreas, visibleAreas } from './wheel';
-import { canRepeatFromCompletion } from './recurrence';
+import { SKIP_MAX, canRepeatFromCompletion } from './recurrence';
 import { LOCALE_TAG, messages } from '../i18n/locale';
 
 // IMPORTAR LA DESCARGA DE LA CUENTA («Descargar mis datos (JSON)»). El archivo viene de fuera: cada registro se
@@ -132,6 +132,8 @@ const observation = (raw: unknown): TaskObservation | undefined => {
   return { id: obsId, type, text: body, completed: bool(raw.completed), url: str(raw.url, SHORT_TEXT_MAX), createdAt };
 };
 
+const nonEmpty = <T>(items: T[]) => (items.length ? items : undefined);
+
 const recurrence = (raw: unknown): Recurrence | undefined => {
   if (!isObj(raw)) return undefined;
   const frequency = oneOf(raw.frequency, ['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'] as const);
@@ -150,7 +152,9 @@ const recurrence = (raw: unknown): Recurrence | undefined => {
     monthDay: int(raw.monthDay, 1, 31),
     nth: int(raw.nth, 1, 4),
     weekday: int(raw.weekday, 0, 6),
-    until: day(raw.until)
+    until: day(raw.until),
+    // Fechas que la serie salta: solo con fechas fijas
+    skip: from ? undefined : nonEmpty([...new Set(list(raw.skip, day, Infinity))].sort().slice(0, SKIP_MAX))
   };
 };
 

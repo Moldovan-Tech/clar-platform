@@ -234,6 +234,33 @@ export const recurrenceRule = (value: unknown, allDay: boolean, anchorDate: stri
   return `RRULE:${parts.join(';')}`;
 };
 
+// Días saltados válidos de la serie (posteriores a la repetición actual), sin repetir y en orden
+const skippedDays = (rec: unknown, dueDate: string) => {
+  const skip = rec && typeof rec === 'object' ? (rec as { skip?: unknown }).skip : undefined;
+  if (!Array.isArray(skip)) return [];
+  return [
+    ...new Set(
+      skip
+        .slice(0, 1000)
+        .map(day)
+        .filter((d): d is string => Boolean(d && d > dueDate))
+    )
+  ].sort();
+};
+
+// Hora local (HHMMSS) de un instante en una zona horaria
+const wallClock = (instant: number, timeZone: string) => {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(new Date(instant));
+  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? '00';
+  return `${part('hour')}${part('minute')}${part('second')}`;
+};
+
 const isDone = (task: SyncTask) => task.status === 'DONE' || (task.status === undefined && task.completed === true);
 
 // El evento de una tarea, o null si no va al calendario: sin fecha límite o en «Algún día». Las hechas y las canceladas
@@ -288,13 +315,21 @@ export const buildTaskEvent = (
     minutes !== null && minutes >= 0 && minutes <= MAX_REMINDER_MINUTES ? [{ method: 'popup' as const, minutes }] : [];
 
   const iso = (instant: number) => new Date(instant).toISOString();
+  // Fechas que la serie salta (borradas en la app o convertidas en tareas sueltas): fuera de la serie, a la misma hora
+  // local que su inicio
+  const seriesStart = 'start' in span ? span.start : null;
+  const exdates = rule && seriesStart !== null ? skippedDays(task.recurrence, dueDate) : [];
+  const exdate =
+    seriesStart !== null && exdates.length
+      ? `EXDATE;TZID=${timeZone}:${exdates.map((d) => `${d.replace(/-/g, '')}T${wallClock(seriesStart, timeZone)}`).join(',')}`
+      : null;
   return {
     summary: cap(`${closed}${text(task.title)}`, SUMMARY_MAX),
     description,
     ...('start' in span
       ? { start: { dateTime: iso(span.start), timeZone }, end: { dateTime: iso(span.end), timeZone } }
       : { start: { date: span.startDate }, end: { date: span.endDate } }),
-    ...(rule ? { recurrence: [rule] } : {}),
+    ...(rule ? { recurrence: exdate ? [rule, exdate] : [rule] } : {}),
     reminders: { useDefault: false, overrides: reminders },
     status: 'confirmed',
     transparency: 'transparent',

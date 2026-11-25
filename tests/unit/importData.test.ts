@@ -118,6 +118,16 @@ test('keeps a repetition from completion on days and weeks, and drops any other 
   assert.equal(repeating({ frequency: 'DAILY', interval: 150 })?.interval, 150);
   assert.equal(repeating({ frequency: 'DAILY', interval: 1000 })?.interval, 1);
   assert.equal(repeating({ frequency: 'DAILY', interval: 0 })?.interval, 1);
+  // Fechas que la serie salta: solo días válidos, sin repetir y en orden; contando desde que se hace, ninguna
+  assert.deepEqual(
+    repeating({ frequency: 'DAILY', interval: 1, skip: ['2026-10-25', 'x', '2026-10-22', '2026-10-25'] })?.skip,
+    ['2026-10-22', '2026-10-25']
+  );
+  assert.equal(repeating({ frequency: 'DAILY', interval: 1, skip: [] })?.skip, undefined);
+  assert.equal(
+    repeating({ frequency: 'DAILY', interval: 1, from: 'COMPLETION', skip: ['2026-10-22'] })?.skip,
+    undefined
+  );
 });
 
 test('rejects files that are not the account download, with a reason', () => {
