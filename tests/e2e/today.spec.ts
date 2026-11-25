@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { fillAndSaveTask, localDateFromToday, openSection, signInWithGoogle } from './helpers';
+import { agendaEntry, fillAndSaveTask, localDateFromToday, openSection, signInWithGoogle } from './helpers';
 
 // Las tareas que vencen hoy destacan: la etiqueta «Hoy» (con texto, no solo color), el título en negrita y, en las
 // listas, un borde violeta a la izquierda. Las de mañana no, aunque falten menos de 24 horas
@@ -27,11 +27,11 @@ test('tasks due today stand out in the lists and the agenda; those due tomorrow 
   // (en la semana, un domingo, mañana ya sería la semana siguiente)
   await openSection(page, 'Agenda');
   await page.getByRole('button', { name: 'Por días' }).click();
-  const entry = page.getByRole('button', { name: new RegExp(today) }).first();
+  const entry = agendaEntry(page, today);
   await expect(entry).toHaveAccessibleName(/\(vence hoy\)/);
   // (el título lleva dentro, oculto, «(vence hoy)»: no se busca exacto)
   await expect(entry.getByText(today)).toHaveCSS('font-weight', '700');
-  const later = page.getByRole('button', { name: new RegExp(tomorrow) }).first();
+  const later = agendaEntry(page, tomorrow);
   await expect(later).not.toHaveAccessibleName(/vence hoy/);
   await expect(later.getByText(tomorrow, { exact: true })).toHaveCSS('font-weight', '600');
 });

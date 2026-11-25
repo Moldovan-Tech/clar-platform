@@ -24,6 +24,32 @@ const released = (year: number, month: number) => monthFormat.format(Date.UTC(ye
 
 export const RELEASE_NOTES: readonly ReleaseNote[] = [
   {
+    version: '1.5.0',
+    month: released(2026, 11),
+    changes: [
+      messages(
+        {
+          title: 'El estado, desde la Agenda',
+          text: 'Las tareas de la Agenda tienen su círculo para marcarlas como hechas (o un candado si esperan a otra) y su selector de estado: En progreso, Bloqueada, Cancelada… Al hacerla o cancelarla, la tarea sale de la Agenda, y «Deshacer» la devuelve.'
+        },
+        {
+          title: 'Status from the Agenda',
+          text: 'Tasks in the Agenda have their circle to mark them as done (or a lock if they wait for another) and their status selector: In progress, Blocked, Cancelled… When you finish or cancel a task, it leaves the Agenda, and “Undo” brings it back.'
+        }
+      ),
+      messages(
+        {
+          title: 'El estado, en la tarea',
+          text: 'Al editar una tarea también eliges su estado. Se aplica al guardar, junto con los demás cambios.'
+        },
+        {
+          title: 'Status in the task',
+          text: 'When you edit a task you can also choose its status. It applies when you save, along with your other changes.'
+        }
+      )
+    ]
+  },
+  {
     version: '1.4.1',
     month: released(2026, 11),
     changes: [

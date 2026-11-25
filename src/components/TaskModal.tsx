@@ -12,12 +12,14 @@ import {
   MonthlyMode,
   RecurrenceFrequency,
   TaskDraft,
-  TaskFormValues
+  TaskFormValues,
+  TaskStatus
 } from '../types';
 import { analyzeImmediateActionSyntax, SyntaxAnalysisResult } from '../services/syntaxAnalyzer';
 import { inferWheelCategory, NLPSuggestionResult } from '../services/nlpEngine';
-import { PRIORITY_LABEL, formatDay, isCancelled, toLocalDate, validateTaskDates } from '../services/tasks';
-import { createsCycle, dependencyCandidates, dependentsOf, tasksById } from '../services/dependencies';
+import { PRIORITY_LABEL, formatDay, isArchived, isCancelled, toLocalDate, validateTaskDates } from '../services/tasks';
+import { blockerOf, createsCycle, dependencyCandidates, dependentsOf, tasksById } from '../services/dependencies';
+import { TaskStatusSelect } from './TaskStatusSelect';
 import { ESTIMATE_OPTIONS } from '../services/taskListing';
 import {
   afterDoneText,
@@ -68,6 +70,8 @@ const m = messages(
     subtitle: 'Empieza por un verbo: así sabrás exactamente qué hacer.',
     close: 'Cerrar',
     list: 'Lista',
+    status: 'Estado',
+    statusHint: '«Hecha» y «Cancelada» la archivan al guardar.',
     work: 'Profesional',
     personal: 'Personal',
     task: 'Tarea',
@@ -210,6 +214,8 @@ const m = messages(
     subtitle: "Start with a verb: that way you'll know exactly what to do.",
     close: 'Close',
     list: 'List',
+    status: 'Status',
+    statusHint: '“Done” and “Cancelled” archive it when you save.',
     work: 'Work',
     personal: 'Personal',
     task: 'Task',
@@ -362,7 +368,8 @@ export type TaskFormData = Omit<TaskItem, 'id' | 'createdAt' | 'updatedAt' | 'st
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSaveTask: (task: TaskFormData) => void;
+  // status: solo al editar, y solo si se cambió en el formulario
+  onSaveTask: (task: TaskFormData, status?: TaskStatus) => void;
   initialContext: ListContext;
   // Al abrir desde «Algún día», la tarea nueva va a «Algún día»
   initialSomeday?: boolean;
@@ -508,6 +515,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   // La última meta creada aquí: se confirma junto al campo (con la ventana abierta, los avisos de la app esperan)
   const [createdGoalId, setCreatedGoalId] = useState<string | null>(null);
   const [dependsOn, setDependsOn] = useState('');
+  // Estado (solo al editar): se aplica al guardar, con las reglas de siempre (dependencias, repeticiones, «Deshacer»)
+  const [status, setStatus] = useState<TaskStatus>('PENDING');
   const [description, setDescription] = useState('');
   // Identificador de la última inferencia NLP: invalida resultados que llegan tras cerrar o reiniciar el formulario
   const nlpRequest = useRef(0);
@@ -572,6 +581,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     setProjectId(form.projectId);
     setGoalId(form.goalId);
     setDependsOn(form.dependsOn);
+    setStatus(editingTask?.status ?? 'PENDING');
     setDescription(form.description);
     setListContext(form.listContext);
     setPriority(form.priority);
@@ -664,8 +674,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const [dateDrafts, setDateDrafts] = useState<Record<string, boolean>>({});
   const draftOf = (field: string) => (pending: boolean) =>
     setDateDrafts((drafts) => (Boolean(drafts[field]) === pending ? drafts : { ...drafts, [field]: pending }));
+  // El estado no va en el formulario guardable (un borrador es siempre una tarea nueva, pendiente)
+  const statusChanged = Boolean(editingTask) && status !== editingTask?.status;
   const isDirty =
-    isOpen && (JSON.stringify(currentForm) !== JSON.stringify(initialForm) || Object.values(dateDrafts).some(Boolean));
+    isOpen &&
+    (JSON.stringify(currentForm) !== JSON.stringify(initialForm) ||
+      statusChanged ||
+      Object.values(dateDrafts).some(Boolean));
   // BORRADOR: una tarea nueva con algo escrito no pregunta al cerrarse; se guarda sola en «Borradores» (también la que
   // se continuaba, con lo nuevo). Una tarea que se edita sí pregunta si descartar los cambios
   const savesAsDraft = !editingTask && Boolean(onSaveDraft);
@@ -932,28 +947,31 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       return;
     }
 
-    onSaveTask({
-      userId: 'user-default',
-      listContext,
-      title: title.trim(),
-      description: description.trim(),
-      priority,
-      isSomeday,
-      // El vínculo se conserva aunque la meta aún no haya llegado (las metas y las tareas cargan por separado). En un
-      // proyecto, la meta es la del proyecto
-      projectId: projectId || undefined,
-      goalId: (project ? project.goalId : goalId) || undefined,
-      // Si la tarea a la que esperaba ya no existe, deja de esperar
-      dependsOn: (dependsOn && tasks.some((t) => t.id === dependsOn) && dependsOn) || undefined,
-      alarmTime: (!alarmBlocked && alarmTime) || undefined,
-      wheelCategory: goal ? goal.area : wheelCategory,
-      wheelCategoryConfidence,
-      linkedBy,
-      observations,
-      estimateMinutes,
-      recurrence,
-      ...dates
-    });
+    onSaveTask(
+      {
+        userId: 'user-default',
+        listContext,
+        title: title.trim(),
+        description: description.trim(),
+        priority,
+        isSomeday,
+        // El vínculo se conserva aunque la meta aún no haya llegado (las metas y las tareas cargan por separado). En un
+        // proyecto, la meta es la del proyecto
+        projectId: projectId || undefined,
+        goalId: (project ? project.goalId : goalId) || undefined,
+        // Si la tarea a la que esperaba ya no existe, deja de esperar
+        dependsOn: (dependsOn && tasks.some((t) => t.id === dependsOn) && dependsOn) || undefined,
+        alarmTime: (!alarmBlocked && alarmTime) || undefined,
+        wheelCategory: goal ? goal.area : wheelCategory,
+        wheelCategoryConfidence,
+        linkedBy,
+        observations,
+        estimateMinutes,
+        recurrence,
+        ...dates
+      },
+      statusChanged ? status : undefined
+    );
 
     onClose();
   };
@@ -1029,6 +1047,28 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               </button>
             </div>
           </div>
+
+          {/* ESTADO (solo al editar): con dependencias, «Hecha» y «En progreso» esperan a la otra tarea */}
+          {editingTask && (
+            <div>
+              <p className="mb-1.5 block text-xs font-bold tracking-wider text-slate-600 uppercase">{m.status}</p>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <TaskStatusSelect
+                  status={status}
+                  taskTitle={editingTask.title}
+                  blocked={Boolean(blockerOf({ dependsOn }, tasksById(tasks)))}
+                  describedBy={isArchived(editingTask) ? undefined : 'task-status-hint'}
+                  onChange={setStatus}
+                />
+                {/* Una tarea archivada ya está «Hecha» o «Cancelada»: la pista no aplica */}
+                {!isArchived(editingTask) && (
+                  <span id="task-status-hint" className="text-[11px] text-slate-500">
+                    {m.statusHint}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* CAMPO 2: nombre de la tarea, con el analizador de la acción siguiente */}
           <div>

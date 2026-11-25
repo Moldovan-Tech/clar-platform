@@ -135,7 +135,7 @@ const m = messages(
         title: 'Agenda',
         points: [
           'Vista semanal (de lunes a domingo) y por días con las tareas con fecha de tus dos listas, los intervalos y las próximas repeticiones de las tareas que se repiten en fechas fijas.',
-          'En la vista por días, las tareas vencidas aparecen aparte. Pulsa una tarea para editarla.'
+          'En la vista por días, las tareas vencidas aparecen aparte. Pulsa una tarea para editarla, márcala como hecha con su círculo o cambia su estado con su selector.'
         ]
       }
     },
@@ -294,7 +294,7 @@ const m = messages(
         title: 'Agenda',
         points: [
           'Weekly view (Monday to Sunday) and daily view with the dated tasks from both your lists, date ranges and the next repeats of tasks that repeat on fixed dates.',
-          'In the daily view, overdue tasks appear separately. Press a task to edit it.'
+          'In the daily view, overdue tasks appear separately. Press a task to edit it, mark it as done with its circle or change its status with its selector.'
         ]
       }
     },

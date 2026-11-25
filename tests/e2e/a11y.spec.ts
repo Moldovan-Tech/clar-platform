@@ -13,7 +13,8 @@ import {
   signInWithGoogle,
   uidOf,
   uniqueEmail,
-  writeTextDocument
+  writeTextDocument,
+  agendaEntry
 } from './helpers';
 
 // Esperas que pasan por una Cloud Function del emulador: con la suite en paralelo su arranque puede tardar
@@ -97,6 +98,16 @@ test('main sections, forms and dialogs', async ({ page }) => {
   await expectNoViolations(page, 'agenda (semana)');
   await page.getByRole('button', { name: 'Por días' }).click();
   await expectNoViolations(page, 'agenda (por días)');
+  // El formulario al editar, con el campo «Estado»
+  await agendaEntry(page, 'Pagar el recibo de la luz').click();
+  await expect(page.getByRole('heading', { name: 'Editar la tarea' })).toBeVisible();
+  // Se audita con el formulario ya relleno: mientras se rellena, la hora y la alarma están desactivadas (sin fecha)
+  const editForm = page.getByRole('dialog', { name: 'Editar la tarea' });
+  await expect(editForm.getByLabel('Hora límite')).toBeEnabled();
+  await expect(editForm.getByLabel(/^Estado de/)).toHaveValue('PENDING');
+  await expectNoViolations(page, 'formulario de tarea (edición)');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('heading', { name: 'Editar la tarea' })).toBeHidden();
 
   await page.getByRole('button', { name: 'Ayuda', exact: true }).click();
   await expectNoViolations(page, 'cómo funciona');
